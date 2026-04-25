@@ -1,0 +1,312 @@
+.login-container{
+    height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    background:#f1f5f9;
+}
+
+.login-box{
+    width:350px;
+    background:white;
+    padding:30px;
+    border-radius:12px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+    text-align:center;
+}
+
+.login-box h2{
+    margin-bottom:20px;
+    color:#1e293b;
+}
+
+.login-box input{
+    width:100%;
+    margin-bottom:15px;
+    padding:10px;
+    border:1px solid #000000;
+    border-radius:6px;
+    outline:none;
+}
+
+.login-box input:focus{
+    border-color:#2563eb;
+}
+
+.login-box button{
+    width:100%;
+    padding:10px;
+    background:#2563eb;
+    color:white;
+    border:none;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.login-box button:hover{
+    background:#1d4ed8;
+    transform:scale(1.02);
+}
+
+.login-title{
+    font-size:22px;
+    font-weight:bold;
+    margin-bottom:10px;
+    color:#2563eb;
+}
+
+body{
+    margin:0;
+    font-family: Arial, Helvetica, sans-serif;
+    background:#f1f5f9;
+    color:#1e293b;
+}
+
+/* SIDEBAR */
+.sidebar{
+    width:230px;
+    height:100vh;
+    background:#1e293b;
+    position:fixed;
+    left:0;
+    top:0;
+    padding-top:80px;
+}
+
+.sidebar a{
+    display:block;
+    padding:15px 25px;
+    text-decoration:none;
+    color:#e2e8f0;
+    font-size:15px;
+}
+
+.sidebar a:hover{
+    background:#334155;
+}
+
+.date-box{
+    background:#334155;
+    color:#e2e8f0;
+    margin:0 15px 25px 15px;
+    padding:15px;
+    border-radius:8px;
+    text-align:center;
+    font-size:14px;
+}
+
+/* TOPBAR */
+.topbar{
+    position:fixed;
+    left:230px;
+    right:0;
+    top:0;
+    height:70px;
+    background:white;
+    border-bottom:1px solid #e2e8f0;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:0 25px;
+}
+
+.profile-btn{
+    background:#e2e8f0;
+    padding:8px 14px;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.profile-btn:hover{
+    transform:scale(1.05);
+    background:#cbd1da;
+}
+
+.logout-btn{
+    background:#ef4444;
+    border:none;
+    padding:8px 16px;
+    color:white;
+    border-radius:6px;
+    cursor:pointer;
+    transition:0.3s;
+}
+
+.logout-btn:hover{
+    background:red;
+    transform:scale(1.05);
+}
+
+/* PROFILE */
+.profile-box{
+    position:fixed;
+    top:75px;
+    left:250px;
+    background:white;
+    padding:20px;
+    border-radius:8px;
+    width:250px;
+    display:none;
+    box-shadow:0 10px 25px rgba(0,0,0,0.1);
+}
+
+/* MAIN */
+.main{
+    margin-left:230px;
+    padding:110px 40px;
+}
+
+.main-section h1{
+    margin-bottom:20px;
+}
+
+/* DASHBOARD */
+.dashboard-cards{
+    display:flex;
+    gap:25px;
+}
+
+.card{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    width:220px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.05);
+    text-align:center;
+}
+
+.card h2{
+    color:#2563eb;
+    font-size:18px;
+}
+
+.card p{
+    font-size:26px;
+    font-weight:bold;
+}
+
+/* INVENTORY GRID */
+.inventory-cards{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(220px,1fr));
+    gap:25px;
+    margin-top:40px;
+}
+
+.inv-card{
+    background:white;
+    padding:25px;
+    border-radius:10px;
+    width:220px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.05);
+    transition:0.25s;
+}
+
+.inv-card:hover{
+    transform:translateY(-6px);
+    box-shadow:0 15px 35px rgba(0,0,0,0.12);
+}
+
+.product-image{
+    width:100%;
+    aspect-ratio:1/1;
+    overflow:hidden;
+    border-radius:8px;
+    background:#f3f3f3;
+}
+
+/* ROLE BOX */
+.role-box{
+    background:white;
+    padding:20px;
+    border-radius:10px;
+    margin-bottom:20px;
+    box-shadow:0 5px 15px rgba(0,0,0,0.05);
+}
+
+.role-box h3{
+    color:#2563eb;
+}
+
+/* FORMS */
+.form-row,
+.update-row,
+.cart-row,
+.payment-row{
+    display:flex;
+    gap:15px;
+    flex-wrap:wrap;
+}
+
+.form-group,
+.update-group,
+.cart-group,
+.payment-group{
+    display:flex;
+    flex-direction:column;
+}
+
+input, select{
+    padding:8px 10px;
+    border:1px solid #000000;
+    border-radius:4px;
+}
+
+/* BUTTONS */
+button{
+    cursor:pointer;
+    border:none;
+    border-radius:4px;
+}
+
+.inv-role-box button{
+    background:#0040ff;
+    color:white;
+    padding:8px 16px;
+}
+
+.inv-control-box button{
+    background:#0ac600;
+    color:white;
+    padding:8px 16px;
+}
+
+.cart-box button,
+.payment-box button{
+    background:#0ac600;
+    color:white;
+    padding:8px 16px;
+}
+
+/* TABLES */
+.role-box table{
+    width:100%;
+    border-collapse:collapse;
+}
+
+.role-box th,
+.role-box td{
+    padding:12px;
+    border-bottom:1px solid #eee;
+    font-size:14px;
+}
+
+.role-box th{
+    background:#f8f8f8;
+}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+    .inventory-cards{
+        grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    }
+}
+
+@media(max-width:700px){
+    .form-row,
+    .update-row{
+        flex-direction:column;
+    }
+}
