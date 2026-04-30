@@ -31,7 +31,7 @@ export const checkout = (data) => API.post("/transactions/checkout", data);
 export const getLogs = () => API.get("/transactions/logs");
 
 export const getServices = () => API.get("/transactions/services");
-export const doneService = (id) => API.patch(`/transactions/services/${id}`);
+export const doneService = (id) => API.post("/transactions/service-done", { service_id: id });
 
 export const getDailySales = () => API.get("/sales/daily");
 export const getWeeklySales = () => API.get("/sales/weekly");

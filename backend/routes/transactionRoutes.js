@@ -139,6 +139,13 @@ router.post("/service-done", (req, res) => {
         "SELECT service_ordered, price FROM service_requests WHERE service_id = ?",
         [service_id],
         (err, result) => {
+
+            if (err) return res.status(500).json({ error: err.message });
+
+            if (result.length === 0) {
+                return res.status(404).json({ error: "Service not found" });
+            }
+
             const service = result[0];
 
             cart.push({
@@ -159,6 +166,7 @@ router.post("/service-done", (req, res) => {
         }
     );
 });
+
 
 
 

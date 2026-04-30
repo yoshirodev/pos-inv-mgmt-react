@@ -65,6 +65,10 @@ export default function Transactions() {
                     amount: "",
                     refnum: ""
                 });
+
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1000);
             }
         });
     };
@@ -82,7 +86,7 @@ export default function Transactions() {
 
             <div className="main">
 
-                <div className="cart-box">
+                <div className="section-box cart-box">
                     <h3>Cart Section</h3>
 
                     <form onSubmit={handleAdd}>
@@ -108,7 +112,7 @@ export default function Transactions() {
                 </div>
 
                 {cart.length > 0 && (
-                    <div className="payment-box">
+                    <div className="section-box payment-box">
                         <h3>Payment</h3>
                         <h4>Total: ₱{total}</h4>
 
@@ -142,7 +146,7 @@ export default function Transactions() {
                     </div>
                 )}
 
-                <div className="role-box">
+                <div className="section-box role-box">
                     <h3>Pending</h3>
 
                     <table>
@@ -174,7 +178,7 @@ export default function Transactions() {
                     </table>
                 </div>
 
-                <div className="role-box">
+                <div className="section-box role-box">
                     <h3>Services</h3>
 
                     <table>
@@ -206,7 +210,7 @@ export default function Transactions() {
                     </table>
                 </div>
 
-                <div className="role-box">
+                <div className="section-box role-box">
                     <h3>Logs</h3>
 
                     <table>

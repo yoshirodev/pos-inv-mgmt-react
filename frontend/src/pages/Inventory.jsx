@@ -86,7 +86,7 @@ export default function Inventory() {
             <div className="main">
                 <h1>Manager Controls <i className="fa-solid fa-sliders"></i></h1>
 
-                <div className="inv-role-box">
+                <div className="section-box inv-role-box">
                     <form onSubmit={handleCreate}>
                         <h3>Create</h3>
 
@@ -116,7 +116,7 @@ export default function Inventory() {
                     </form>
                 </div>
 
-                <div className="inv-control-box">
+                <div className="section-box inv-control-box">
                     <form onSubmit={handleUpdate}>
                         <h3>Update Product Information</h3>
 
@@ -158,7 +158,7 @@ export default function Inventory() {
                         {products.map(row => (
                             <div className="inv-card" key={row.id}>
                                 <div className="product-image">
-                                    <img src={row.image_path || "https://image.shutterstock.com/image-photo/coriander-isolated-on-wood-background-260nw-1416953786.jpg"} />
+                                    <img src={`/images/${row.image_path}`} className="square-img" />
                                 </div>
                                 <h3>ID: {row.id}</h3>
                                 <h3>{row.product_name}</h3>
@@ -166,7 +166,7 @@ export default function Inventory() {
                                 <p>Cost: {row.cost}</p>
                                 <p>Type: {row.type}</p>
 
-                                <button id="delete-product" onClick={() => handleDelete(row.id)}>
+                                <button className="delete-button-inv" id="delete-product" onClick={() => handleDelete(row.id)}>
                                     Delete
                                 </button>
                             </div>
