@@ -66,6 +66,9 @@ export default function Inventory() {
 
 
     const handleDelete = (id) => {
+        const confirm = window.confirm ("Are you sure to delete this item in your inventory?");
+
+        if (!confirm) return;
         deleteProduct(id).then(() => {
             setProducts(products.filter(p => p.id !== id));
         });
