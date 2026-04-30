@@ -30,6 +30,10 @@ export default function Dashboard() {
     });
 
     const handleDelete = (id) => {
+        const confirm = window.confirm("Are you sure to delete this employee?");
+
+        if(!confirm) return;
+
         deleteUser(id).then(() => {
             setData({
                 ...data,
