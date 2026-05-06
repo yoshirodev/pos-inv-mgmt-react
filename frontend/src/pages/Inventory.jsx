@@ -5,8 +5,11 @@ import ProfileBox from "../components/ProfileBox";
 import { getInventory, createProduct, updateProduct, deleteProduct } from "../services/api";
 
 export default function Inventory() {
+    const [data, setData] = useState(null);
     const [products, setProducts] = useState([]);
     const [profileOpen, setProfileOpen] = useState(false);
+
+    const role = localStorage.getItem("role");
 
     const [createData, setCreateData] = useState({
         product_name: "",
@@ -169,9 +172,15 @@ export default function Inventory() {
                                 <p>Cost: {row.cost}</p>
                                 <p>Type: {row.type}</p>
 
-                                <button className="delete-button-inv" id="delete-product" onClick={() => handleDelete(row.id)}>
-                                    Delete
-                                </button>
+                                {role === "Manager" && (
+                                    <button
+                                        id="delete-product"
+                                        className="delete-button-inv"
+                                        onClick={() => handleDelete(row.id)}
+                                    >
+                                        Delete
+                                    </button>
+                                )}
                             </div>
                         ))}
                     </div>

@@ -7,16 +7,20 @@ export default function Login() {
     const handleLogin = (e) => {
         e.preventDefault();
 
-        axios.post("http://localhost:5000/api/auth/login", form)
-            .then(res => {
-                if (res.data.error) {
-                    alert("Invalid login");
-                } else {
-                    localStorage.setItem("token", res.data.token);
-                    localStorage.setItem("user_id", res.data.user.accID);
-                    window.location.href = "/dashboard";
-                }
-            });
+    axios.post("http://localhost:5000/api/auth/login", form)
+        .then(res => {
+            if (res.data.error) {
+                alert("Invalid login");
+            } else {
+                localStorage.setItem("token", res.data.token);
+                localStorage.setItem("user_id", res.data.user.accID);
+
+                // ✅ ADD THIS LINE
+                localStorage.setItem("role", res.data.user.accountType);
+
+                window.location.href = "/dashboard";
+            }
+        });
     };
 
     return (

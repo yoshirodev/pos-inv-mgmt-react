@@ -53,16 +53,15 @@ router.put("/:id", (req, res) => {
 
 
 router.delete("/:id", (req, res) => {
+    const role = req.headers.role;
+
+    if (role !== "Manager") {
+        return res.status(403).json({ message: "Forbidden" });
+    }
+
     db.query("DELETE FROM inventory WHERE id = ?", [req.params.id], () => {
         res.json({ message: "deleted" });
     });
 });
-
-router.put("/:id", (req, res) => {
-    console.log("HIT UPDATE ROUTE");
-    res.json({ ok: true });
-});
-
-
 
 module.exports = router;

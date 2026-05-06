@@ -76,48 +76,50 @@ export default function Dashboard() {
                 </section>
 
                 <section className="role-section">
-                    <div className="role-box">
-                        <h3>HR Management</h3>
-                        <h2>Account Management Table</h2>
+                    {data.user.accountType === "HR" && (
+                        <div className="role-box">
+                            <h3>HR Management</h3>
+                            <h2>Account Management Table</h2>
 
-                        <table>
-                            <thead>
-                                <tr>
-                                    <th>accID</th>
-                                    <th>Last Name</th>
-                                    <th>First Name</th>
-                                    <th>Middle Name</th>
-                                    <th>Birthdate</th>
-                                    <th>Gender</th>
-                                    <th>Email</th>
-                                    <th>Phone Number</th>
-                                    <th>Account Type</th>
-                                    <th>Username</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                {data.accounts.map(row => (
-                                    <tr key={row.accID}>
-                                        <td>{row.accID}</td>
-                                        <td>{row.lastname}</td>
-                                        <td>{row.firstname}</td>
-                                        <td>{row.middlename}</td>
-                                        <td>{row.birthdate}</td>
-                                        <td>{row.gender}</td>
-                                        <td>{row.email}</td>
-                                        <td>{row.phonenumber}</td>
-                                        <td>{row.accountType}</td>
-                                        <td>{row.username}</td>
-                                        <td>
-                                            <button className="empDelButton" onClick={() => handleDelete(row.accID)}>
-                                                Delete
-                                            </button>
-                                        </td>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>accID</th>
+                                        <th>Last Name</th>
+                                        <th>First Name</th>
+                                        <th>Middle Name</th>
+                                        <th>Birthdate</th>
+                                        <th>Gender</th>
+                                        <th>Email</th>
+                                        <th>Phone Number</th>
+                                        <th>Account Type</th>
+                                        <th>Username</th>
                                     </tr>
-                                ))}
-                            </tbody>
-                        </table>
-                    </div>
+                                </thead>
+                                <tbody>
+                                    {data.accounts.map(row => (
+                                        <tr key={row.accID}>
+                                            <td>{row.accID}</td>
+                                            <td>{row.lastname}</td>
+                                            <td>{row.firstname}</td>
+                                            <td>{row.middlename}</td>
+                                            <td>{row.birthdate}</td>
+                                            <td>{row.gender}</td>
+                                            <td>{row.email}</td>
+                                            <td>{row.phonenumber}</td>
+                                            <td>{row.accountType}</td>
+                                            <td>{row.username}</td>
+                                            <td>
+                                                <button className="empDelButton" onClick={() => handleDelete(row.accID)}>
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    )}
                 </section>
             </div>
         </div>

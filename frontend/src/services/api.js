@@ -38,3 +38,5 @@ export const getWeeklySales = () => API.get("/sales/weekly");
 export const getMonthlySales = () => API.get("/sales/monthly");
 
 export default API;
+
+
