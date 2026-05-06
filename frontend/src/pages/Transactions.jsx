@@ -19,6 +19,8 @@ export default function Transactions() {
     const [logs, setLogs] = useState([]);
     const [services, setServices] = useState([]);
 
+    const role = localStorage.getItem("role");
+
     const [profileOpen, setProfileOpen] = useState(false);
 
     const [form, setForm] = useState({ product: "", quantity: "" });
@@ -210,44 +212,45 @@ export default function Transactions() {
                     </table>
                 </div>
 
-                <div className="section-box role-box">
-                    <h3>Logs</h3>
+                {role === "Manager" && (
+                    <div className="section-box role-box">
+                        <h3>Logs</h3>
 
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Product</th>
-                                <th>Qty</th>
-                                <th>Price</th>
-                                <th>Method</th>
-                                <th>Amount</th>
-                                <th>Change</th>
-                                <th>Subtotal</th>
-                                <th>Ref</th>
-                                <th>Time</th>
-                            </tr>
-                        </thead>
-
-                        <tbody>
-                            {logs.map(l => (
-                                <tr key={l.log_id}>
-                                    <td>{l.log_id}</td>
-                                    <td>{l.product_name}</td>
-                                    <td>{l.quantity}</td>
-                                    <td>{l.price}</td>
-                                    <td>{l.payment_method}</td>
-                                    <td>{l.amount_paid}</td>
-                                    <td>{l.change_amount}</td>
-                                    <td>{l.subtotal}</td>
-                                    <td>{l.reference_number}</td>
-                                    <td>{l.timestamp}</td>
+                        <table>
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Product</th>
+                                    <th>Qty</th>
+                                    <th>Price</th>
+                                    <th>Method</th>
+                                    <th>Amount</th>
+                                    <th>Change</th>
+                                    <th>Subtotal</th>
+                                    <th>Ref</th>
+                                    <th>Time</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                            </thead>
 
+                            <tbody>
+                                {logs.map(l => (
+                                    <tr key={l.log_id}>
+                                        <td>{l.log_id}</td>
+                                        <td>{l.product_name}</td>
+                                        <td>{l.quantity}</td>
+                                        <td>{l.price}</td>
+                                        <td>{l.payment_method}</td>
+                                        <td>{l.amount_paid}</td>
+                                        <td>{l.change_amount}</td>
+                                        <td>{l.subtotal}</td>
+                                        <td>{l.reference_number}</td>
+                                        <td>{l.timestamp}</td>
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                )}
             </div>
         </div>
     );

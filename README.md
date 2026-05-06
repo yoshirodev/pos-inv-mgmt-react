@@ -5,4 +5,6 @@
 
 HOW TO RUN PROGRAM
 
-bash run.sh
+npm run dev in the root folder
+
+always git pull origin main for updates
