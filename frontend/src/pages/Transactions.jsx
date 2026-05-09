@@ -85,14 +85,12 @@ export default function Transactions() {
         });
     };
 
-    // ── Service: Pending → Payment ────────────────────────────
-    // Adds the service to the cart and sets its status to "Payment"
-    // so it waits for the cashier to collect payment before marking Done.
+
     const handleServiceDone = (service_id) => {
         doneService(service_id).then(res => {
-            // Update cart with the service item added
+
             setCart(res.data);
-            // Refresh services list so the status shows "Payment"
+
             getServices().then(r => setServices(r.data));
         });
     };
