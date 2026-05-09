@@ -19,7 +19,7 @@ This system helps manage products, track inventory, and record sales efficiently
 - 📊 Inventory Tracking (Real-time stock updates)
 - 💰 Sales Management (Record and monitor transactions)
 - 📈 Dashboard Overview (Sales and inventory summary)
-- 🔐 Role-based UI access (if implemented)
+- 🔐 Role-based UI access
 - ⚡ Fast and responsive user interface
 
 ---
