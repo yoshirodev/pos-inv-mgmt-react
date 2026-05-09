@@ -143,22 +143,22 @@ export default function Inventory() {
 
                             <div className="update-group product">
                                 <label>Product Name</label>
-                                <input type="text" onChange={e => setUpdateData({ ...updateData, product_name: e.target.value })} />
+                                <input type="text" value={updateData.product_name} onChange={e => setUpdateData({ ...updateData, product_name: e.target.value })} />
                             </div>
 
                             <div className="update-group type">
                                 <label>Type</label>
-                                <input type="text" onChange={e => setUpdateData({ ...updateData, type: e.target.value })} />
+                                <input type="text" value={updateData.type} onChange={e => setUpdateData({ ...updateData, type: e.target.value })} />
                             </div>
 
                             <div className="update-group cost">
                                 <label>Cost</label>
-                                <input type="text" onChange={e => setUpdateData({ ...updateData, cost: e.target.value })} />
+                                <input type="text" value={updateData.cost}  onChange={e => setUpdateData({ ...updateData, cost: e.target.value })} />
                             </div>
 
                             <div className="update-group quantity">
                                 <label>Quantity</label>
-                                <input type="text" onChange={e => setUpdateData({ ...updateData, quantity: e.target.value })} />
+                                <input type="text" value={updateData.quantity} onChange={e => setUpdateData({ ...updateData, quantity: e.target.value })} />
                             </div>
                         </div>
 

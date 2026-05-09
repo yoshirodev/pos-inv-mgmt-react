@@ -22,6 +22,9 @@ export default function Transactions() {
     const [logs, setLogs] = useState([]);
     const [services, setServices] = useState([]);
 
+    const [receiptOpen, setReceiptOpen] = useState(false);
+    const [selectedReceipt, setSelectedReceipt] = useState({});
+
     const role = localStorage.getItem("role");
 
     const [profileOpen, setProfileOpen] = useState(false);
@@ -85,6 +88,10 @@ export default function Transactions() {
         });
     };
 
+    const handleReceipt = (log) => {
+        setSelectedReceipt(log);
+        setReceiptOpen(true);
+    };
 
     const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
 
@@ -103,6 +110,11 @@ export default function Transactions() {
             <Sidebar today={today} />
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
             <ProfileBox user={data.user} visible={profileOpen} />
+            <ReceiptBox
+                user={selectedReceipt}
+                visible={receiptOpen}
+                onClose={() => setReceiptOpen(false)}
+            />
 
             <div className="main">
 
@@ -255,7 +267,10 @@ export default function Transactions() {
                                 {logs.map(l => (
                                     <tr key={l.log_id}>
                                         <td>
-                                            <button className="empDelButton">
+                                            <button
+                                                className="empDelButton"
+                                                onClick={() => handleReceipt(l)}
+                                            >
                                                 Receipt
                                             </button>
                                         </td>

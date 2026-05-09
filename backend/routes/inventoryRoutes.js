@@ -20,37 +20,63 @@ router.post("/create", (req, res) => {
 });
 
 router.put("/:id", (req, res) => {
-    console.log("UPDATE HIT:", req.params.id);
-
     const productID = req.params.id;
     const { product_name, cost, quantity, type } = req.body;
 
-    db.query("SELECT * FROM inventory WHERE id = ?", [productID], (err, result) => {
-        if (err || result.length === 0) {
-            return res.status(404).json({ message: "Product not found" });
+    db.query(
+        "SELECT * FROM inventory WHERE id = ?",
+        [productID],
+        (err, result) => {
+            if (err) {
+                return res.status(500).json({ message: "Database error" });
+            }
+
+            if (result.length === 0) {
+                return res.status(404).json({ message: "Product not found" });
+            }
+
+            const current = result[0];
+
+            const newName =
+                product_name && product_name.trim() !== ""
+                    ? product_name
+                    : current.product_name;
+
+            const newCost =
+                cost !== undefined && cost !== null && cost !== ""
+                    ? cost
+                    : current.cost;
+
+            const newQty =
+                quantity !== undefined && quantity !== null && quantity !== ""
+                    ? quantity
+                    : current.quantity;
+
+            const newType =
+                type && type.trim() !== ""
+                    ? type
+                    : current.type;
+
+            const sql = `
+                UPDATE inventory
+                SET product_name = ?, cost = ?, quantity = ?, type = ?
+                WHERE id = ?
+            `;
+
+            db.query(
+                sql,
+                [newName, newCost, newQty, newType, productID],
+                (err) => {
+                    if (err) {
+                        return res.status(500).json({ message: "Update failed" });
+                    }
+
+                    res.json({ message: "updated" });
+                }
+            );
         }
-
-        const current = result[0];
-
-        const newName = product_name ?? current.product_name;
-        const newCost = cost ?? current.cost;
-        const newQty = quantity ?? current.quantity;
-        const newType = type ?? current.type;
-
-        const sql = `
-            UPDATE inventory 
-            SET product_name=?, cost=?, quantity=?, type=? 
-            WHERE id=?
-        `;
-
-        db.query(sql, [newName, newCost, newQty, newType, productID], () => {
-            res.json({ message: "updated" });
-        });
-    });
+    );
 });
-
-
-
 
 router.delete("/:id", (req, res) => {
     const role = req.headers.role;
