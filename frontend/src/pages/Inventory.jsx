@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
-import { getInventory, createProduct, updateProduct, deleteProduct } from "../services/api";
+import { getDashboard, getInventory, createProduct, updateProduct, deleteProduct } from "../services/api";
 
 export default function Inventory() {
     const [data, setData] = useState(null);
@@ -10,6 +10,8 @@ export default function Inventory() {
     const [profileOpen, setProfileOpen] = useState(false);
 
     const role = localStorage.getItem("role");
+
+    const userID = localStorage.getItem("user_id");
 
     const [createData, setCreateData] = useState({
         product_name: "",
@@ -31,8 +33,11 @@ export default function Inventory() {
     }, []);
 
     const fetchData = () => {
+        getDashboard(userID).then(res => setData(res.data));
         getInventory().then(res => setProducts(res.data));
     };
+
+    if (!data) return null;
 
     const handleCreate = (e) => {
         e.preventDefault();
@@ -83,11 +88,15 @@ export default function Inventory() {
         day: "numeric"
     });
 
+    const refreshPage = () => {
+        window.location.reload();
+    };
+
     return (
         <div>
             <Sidebar today={today} />
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
-            <ProfileBox user={{}} visible={profileOpen} />
+            <ProfileBox user={data.user} visible={profileOpen} />
 
             <div className="main">
                 <h1>Manager Controls <i className="fa-solid fa-sliders"></i></h1>
@@ -118,7 +127,7 @@ export default function Inventory() {
                             </div>
                         </div>
 
-                        <button type="submit">Create</button>
+                        <button type="submit" onClick={refreshPage}>Create</button>
                     </form>
                 </div>
 
@@ -153,7 +162,7 @@ export default function Inventory() {
                             </div>
                         </div>
 
-                        <button type="submit">Update</button>
+                        <button type="submit" onClick={refreshPage}>Update</button>
                     </form>
                 </div>
 

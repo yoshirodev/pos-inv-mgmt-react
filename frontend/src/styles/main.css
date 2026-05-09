@@ -294,6 +294,23 @@ body {
 }
 
 /* ===================================================
+   RECEIPT DROPDOWN
+=================================================== */
+.receipt-box {
+  position: fixed;
+  top: calc(var(--topbar-h) + 8px);
+  left: calc(var(--sidebar-w) + 20px);
+  background: var(--white);
+  padding: 20px;
+  border-radius: var(--radius-md);
+  width: 260px;
+  display: none;
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border);
+  z-index: 200;
+}
+
+/* ===================================================
    MAIN CONTENT
 =================================================== */
 .main {

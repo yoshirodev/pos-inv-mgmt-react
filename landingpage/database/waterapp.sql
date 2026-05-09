@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 11, 2026 at 04:42 PM
+-- Generation Time: May 09, 2026 at 01:02 PM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -55,21 +55,21 @@ CREATE TABLE `inventory` (
 --
 
 INSERT INTO `inventory` (`id`, `product_name`, `type`, `cost`, `quantity`, `image_path`) VALUES
-(1, '5 Gal. Slim Container', 'container', 450.00, 94, ''),
-(2, '5 Gal. Round Container', 'container', 420.00, 100, ''),
-(3, 'R.O Membranes', 'filter', 1200.00, 96, ''),
-(4, 'Flow Meters', 'equipment', 350.00, 100, ''),
-(5, 'Pressure Gauge', 'equipment', 300.00, 100, ''),
-(6, 'Filter Housing', 'filter', 650.00, 100, ''),
-(7, 'Sediment Filters', 'filter', 120.00, 100, ''),
-(8, 'Booster Pumps', 'equipment', 3500.00, 100, ''),
-(9, 'Brine Tanks', 'container', 2500.00, 100, ''),
-(10, 'Heat Gun', 'tool', 900.00, 100, ''),
-(11, 'Filter Seals', 'parts', 80.00, 100, ''),
-(12, 'UV Lamps', 'filter', 1500.00, 99, ''),
-(13, 'Automatic Pressure Control (APC)', 'equipment', 1800.00, 100, ''),
-(14, 'TDS Meter', 'equipment', 700.00, 100, ''),
-(15, '20x30 Plastic for Containers', 'supplies', 150.00, 100, '');
+(1, '5 Gal. Slim Container', 'container', 450.00, 63, '5galslimcontainer.webp'),
+(2, '5 Gal. Round Container', 'container', 420.00, 60, '5galroundcontainer.jpg'),
+(3, 'R.O Membranes', 'filter', 1200.00, 96, 'romembrane.jpg'),
+(4, 'Flow Meters', 'equipment', 350.00, 100, 'flowmeters.jpg'),
+(5, 'Pressure Gauge', 'equipment', 300.00, 67, 'pressuregauge.webp'),
+(6, 'Filter Housing', 'filter', 650.00, 100, 'filterhousing.jpeg'),
+(7, 'Sediment Filters', 'filter', 450.00, 100, 'sedimentfilters.jpg'),
+(8, 'Booster Pumps', 'equipment', 3500.00, 100, 'boosterpumps.jpg'),
+(9, 'Brine Tanks', 'container', 2500.00, 95, 'brinetanks.jpg'),
+(10, 'Heat Gun', 'tool', 900.00, 100, 'heatgun.jpeg'),
+(11, 'Filter Seals', 'parts', 80.00, 100, 'filterseals.jpg'),
+(12, 'UV Lamps', 'filter', 1500.00, 99, 'uvlamps.jpeg'),
+(14, 'TDS Meter', 'equipment', 700.00, 100, 'tdsmeter.png'),
+(15, 'Plastic Container', 'container', 150.00, 200, '20x30plasticforcontainers.png'),
+(30, 'Product Update', '', 0.00, 0, '');
 
 -- --------------------------------------------------------
 
@@ -96,9 +96,9 @@ CREATE TABLE `logindata` (
 --
 
 INSERT INTO `logindata` (`accID`, `lastname`, `firstname`, `middlename`, `birthdate`, `gender`, `phonenumber`, `email`, `userpassword`, `accountType`, `username`) VALUES
-(10, 'Boncodin', 'Kyle Mitchel', '', '2026-03-18', 'Male', '992-724-246', 'kylemitchel.boncodin@unc.edu.ph', '$2y$10$QoGxkfgXkAxZgNiodhjUBuigCNscgskKT8R3s7y5vib5h0KmEk41C', 'Manager', 'bom'),
 (11, 'Rodriguez', 'Yoshiki', '', '2006-03-04', 'Male', '992-724-246', 'yoshiki.rodriguez@unc.edu.ph', '$2y$10$s0/Th.ixC9Ykw5gsIXb4ZOWOGeWLvY7eH.mmssXUeoRBbNjzlXJxq', 'HR', 'yoshi'),
-(12, 'Gasilla', 'Zier Damerick', 'Tible', '2006-11-11', 'Male', '992-724-246', 'zierdamerick.gasilla@unc.edu.ph', '$2y$10$14IetAScbMgkEMSTW25k2uBDJ0jimR7fc4KlQfue5LicSNSGzMF/G', 'Employee', 'zier');
+(12, 'Gasilla', 'Zier Damerick', 'Tible', '2006-11-11', 'Male', '992-724-246', 'zierdamerick.gasilla@unc.edu.ph', '$2y$10$14IetAScbMgkEMSTW25k2uBDJ0jimR7fc4KlQfue5LicSNSGzMF/G', 'Employee', 'zier'),
+(14, 'Boncodin', 'Kyle Mitchel', 'Test', '2026-03-05', 'Male', '992-835-567', 'kylemitchel.boncodin@unc.edu.ph', '$2y$10$cp5fmfWyx3UNJf/PPIfZ.eD/qQhajqvrqfP/VkfhrNZgl4q9xj5TO', 'Manager', 'bom');
 
 -- --------------------------------------------------------
 
@@ -133,6 +133,17 @@ CREATE TABLE `service_requests` (
   `price` double NOT NULL DEFAULT 0
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
+--
+-- Dumping data for table `service_requests`
+--
+
+INSERT INTO `service_requests` (`service_id`, `name`, `address`, `phone_no`, `email`, `service_ordered`, `status`, `created_at`, `price`) VALUES
+(2, 'Person Test', 'Address Test', '09123456789', 'testemail@gmail.com', 'Rehab of Media Filters', 'Done', '2026-03-12 18:21:57', 4500),
+(3, 'Person 2', 'wfafAWF', '43441', 'zierdamerick.gasilla@unc.edu.ph', 'Repair and Upgrades', 'Done', '2026-04-25 15:32:34', 2500),
+(4, 'Person 1', '21421412414214241', '12421442', 'yoshiki.rodriguez@gmail.com', 'Membrane Cleaning', 'Done', '2026-04-25 15:38:08', 3000),
+(5, 'Person Test', '214214124214', '214214214', 'rem.balatan@unc.edu.ph', 'Dual Membrane Upgrade', 'Done', '2026-04-25 15:38:40', 18000),
+(10, '41141414', '21421421421', '1421421421', '214214@gmail.com', 'Dual Membrane Upgrade', 'Pending', '2026-05-08 15:35:19', 18000);
+
 -- --------------------------------------------------------
 
 --
@@ -161,7 +172,18 @@ INSERT INTO `transaction_log` (`log_id`, `reference_number`, `timestamp`, `produ
 (101, 0, '2026-03-11 23:24:38', '5 Gal. Slim Container', 5, 450.00, 2250.00, 'Cash', 3000.00, 750.00),
 (102, 2147483647, '2026-03-11 23:26:09', '5 Gal. Slim Container', 1, 450.00, 450.00, 'GCash', 450.00, 0.00),
 (103, 2147483647, '2026-03-11 23:27:47', 'UV Lamps', 1, 1500.00, 1500.00, 'Maya', 1500.00, 0.00),
-(104, 0, '2026-03-11 23:40:32', 'R.O Membranes', 4, 1200.00, 4800.00, 'Cash', 5000.00, 200.00);
+(104, 0, '2026-03-11 23:40:32', 'R.O Membranes', 4, 1200.00, 4800.00, 'Cash', 5000.00, 200.00),
+(105, 0, '2026-03-13 03:00:26', 'Rehab of Media Filters', 1, 4500.00, 4500.00, 'Cash', 5000.00, 500.00),
+(106, 0, '2026-03-13 03:15:39', '5 Gal. Slim Container', 1, 450.00, 450.00, 'Cash', 500.00, 50.00),
+(107, 0, '2026-03-13 14:07:39', '5 Gal. Slim Container', 5, 450.00, 2250.00, 'Cash', 3000.00, 750.00),
+(108, 0, '2026-04-25 22:35:38', '5 Gal. Round Container', 20, 420.00, 8400.00, 'Cash', 10000.00, 1600.00),
+(109, 0, '2026-04-25 22:37:06', '5 Gal. Round Container', 20, 420.00, 8400.00, 'Cash', 10000.00, 1600.00),
+(110, 0, '2026-04-25 22:37:25', 'Brine Tanks', 5, 2500.00, 12500.00, 'Cash', 50000.00, 37500.00),
+(111, 0, '2026-04-25 23:10:36', '5 Gal. Slim Container', 20, 450.00, 9000.00, 'Cash', 9000.00, 0.00),
+(112, 0, '2026-04-30 14:20:47', 'Rehab of Media Filters', 1, 4500.00, 4500.00, 'Cash', 5000.00, 500.00),
+(113, 0, '2026-04-30 14:23:03', 'Supply and Install Water Stations', 1, 200000.00, 200000.00, 'Cash', 1000000.00, 800000.00),
+(114, 0, '2026-04-30 14:28:05', 'Pressure Gauge', 33, 300.00, 9900.00, 'Cash', 10000.00, 100.00),
+(115, 0, '2026-05-08 23:18:22', '5 Gal. Slim Container', 5, 450.00, 2250.00, 'Cash', 10000.00, 7750.00);
 
 -- --------------------------------------------------------
 
@@ -241,13 +263,13 @@ ALTER TABLE `daily_sales`
 -- AUTO_INCREMENT for table `inventory`
 --
 ALTER TABLE `inventory`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=23;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=31;
 
 --
 -- AUTO_INCREMENT for table `logindata`
 --
 ALTER TABLE `logindata`
-  MODIFY `accID` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=13;
+  MODIFY `accID` int(100) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `monthly_sales`
@@ -259,13 +281,13 @@ ALTER TABLE `monthly_sales`
 -- AUTO_INCREMENT for table `service_requests`
 --
 ALTER TABLE `service_requests`
-  MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `service_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=11;
 
 --
 -- AUTO_INCREMENT for table `transaction_log`
 --
 ALTER TABLE `transaction_log`
-  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=105;
+  MODIFY `log_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=116;
 
 --
 -- AUTO_INCREMENT for table `weekly_sales`

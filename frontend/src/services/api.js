@@ -28,7 +28,7 @@ export const deleteCartItem = (id) => API.delete(`/transactions/cart/${id}`);
 
 export const checkout = (data) => API.post("/transactions/checkout", data);
 
-export const getLogs = () => API.get("/transactions/logs");
+export const getLogs = (id) => API.get("/transactions/logs");
 
 export const getServices = () => API.get("/transactions/services");
 export const doneService = (id) => API.post("/transactions/service-done", { service_id: id });

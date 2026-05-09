@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
-import { getDailySales, getWeeklySales, getMonthlySales } from "../services/api";
+import { getDashboard, getDailySales, getWeeklySales, getMonthlySales } from "../services/api";
 
 export default function Sales() {
+    const [data, setData] = useState(null);
     const [daily, setDaily] = useState([]);
     const [weekly, setWeekly] = useState([]);
     const [monthly, setMonthly] = useState([]);
@@ -13,19 +14,28 @@ export default function Sales() {
 
     const role = localStorage.getItem("role");
 
+    const userID = localStorage.getItem("user_id");
+
     useEffect(() => {
+        getDashboard(userID).then(res => setData(res.data));
         getDailySales().then(res => setDaily(res.data));
         getWeeklySales().then(res => setWeekly(res.data));
         getMonthlySales().then(res => setMonthly(res.data));
     }, []);
 
-    const today = new Date().toLocaleDateString();
+    if (!data) return null;
+
+    const today = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
 
     return (
         <div>
             <Sidebar today={today} />
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
-            <ProfileBox user={{}} visible={profileOpen} />
+            <ProfileBox user={data.user} visible={profileOpen} />
 
             <div className="main">
 

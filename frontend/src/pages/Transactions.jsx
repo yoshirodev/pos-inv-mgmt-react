@@ -2,7 +2,9 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
+import ReceiptBox from "../components/ReceiptBox";
 import {
+    getDashboard,
     getProducts,
     getCart,
     addToCart,
@@ -14,6 +16,7 @@ import {
 } from "../services/api";
 
 export default function Transactions() {
+    const [data, setData] = useState(null);
     const [products, setProducts] = useState([]);
     const [cart, setCart] = useState([]);
     const [logs, setLogs] = useState([]);
@@ -26,12 +29,19 @@ export default function Transactions() {
     const [form, setForm] = useState({ product: "", quantity: "" });
     const [payment, setPayment] = useState({ paymethod: "", amount: "", refnum: "" });
 
+    const doneBtn = document.getElementById('ServiceDoneButton');
+
+    const userID = localStorage.getItem("user_id");
+
     useEffect(() => {
+        getDashboard(userID).then(res => setData(res.data));
         getProducts().then(res => setProducts(res.data));
         getCart().then(res => setCart(res.data));
         getLogs().then(res => setLogs(res.data));
         getServices().then(res => setServices(res.data));
     }, []);
+
+    if (!data) return null;
 
     const handleAdd = (e) => {
         e.preventDefault();
@@ -78,13 +88,21 @@ export default function Transactions() {
 
     const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
 
-    const today = new Date().toLocaleDateString();
+    const today = new Date().toLocaleDateString("en-US", {
+        year: "numeric",
+        month: "long",
+        day: "numeric"
+    });
+
+    const refreshPage = () => {
+        window.location.reload();
+    };
 
     return (
         <div>
             <Sidebar today={today} />
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
-            <ProfileBox user={{}} visible={profileOpen} />
+            <ProfileBox user={data.user} visible={profileOpen} />
 
             <div className="main">
 
@@ -108,7 +126,7 @@ export default function Transactions() {
                                 <input type="number" required onChange={e => setForm({ ...form, quantity: e.target.value })} />
                             </div>
 
-                            <button type="submit">Add to Cart</button>
+                            <button type="submit" onClick={refreshPage}>Add to Cart</button>
                         </div>
                     </form>
                 </div>
@@ -142,7 +160,7 @@ export default function Transactions() {
                                     <input type="number" onChange={e => setPayment({ ...payment, refnum: e.target.value })} />
                                 </div>
 
-                                <button type="submit">Checkout</button>
+                                <button type="submit" onClick={refreshPage}>Checkout</button>
                             </div>
                         </form>
                     </div>
@@ -201,7 +219,7 @@ export default function Transactions() {
                                     <td>{s.status}</td>
                                     <td>
                                         {s.status === "Pending" &&
-                                            <button onClick={() => doneService(s.service_id).then(res => setCart(res.data))}>
+                                            <button id="ServiceDoneButton" onClick={() => doneService(s.service_id).then(res => setCart(res.data))} onClick={refreshPage}>
                                                 Done
                                             </button>
                                         }
@@ -219,6 +237,7 @@ export default function Transactions() {
                         <table>
                             <thead>
                                 <tr>
+                                    <th>Receipt</th>
                                     <th>ID</th>
                                     <th>Product</th>
                                     <th>Qty</th>
@@ -235,6 +254,11 @@ export default function Transactions() {
                             <tbody>
                                 {logs.map(l => (
                                     <tr key={l.log_id}>
+                                        <td>
+                                            <button className="empDelButton">
+                                                Receipt
+                                            </button>
+                                        </td>
                                         <td>{l.log_id}</td>
                                         <td>{l.product_name}</td>
                                         <td>{l.quantity}</td>
