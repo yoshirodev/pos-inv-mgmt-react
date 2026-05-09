@@ -2,9 +2,9 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 
-// ─────────────────────────────────────────────────────────────
+
 // Helper: promisify db.query so we can use async/await cleanly
-// ─────────────────────────────────────────────────────────────
+
 function query(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.query(sql, params, (err, result) => {
@@ -14,9 +14,9 @@ function query(sql, params = []) {
     });
 }
 
-// ─────────────────────────────────────────────────────────────
+
 // GET /sales/daily  — fetch all daily sales rows (newest first)
-// ─────────────────────────────────────────────────────────────
+
 router.get("/daily", async (req, res) => {
     try {
         const result = await query(
@@ -28,9 +28,9 @@ router.get("/daily", async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────────────────────────
+
 // GET /sales/weekly — fetch all weekly sales rows (newest first)
-// ─────────────────────────────────────────────────────────────
+
 router.get("/weekly", async (req, res) => {
     try {
         const result = await query(
@@ -42,9 +42,9 @@ router.get("/weekly", async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────────────────────────
+
 // GET /sales/monthly — fetch all monthly sales rows (newest first)
-// ─────────────────────────────────────────────────────────────
+
 router.get("/monthly", async (req, res) => {
     try {
         const result = await query(
@@ -56,18 +56,6 @@ router.get("/monthly", async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────────────────────────
-// POST /sales/sync
-//
-// Algorithm:
-//   1. Pull every row from transaction_log
-//   2. Group them by: exact date / ISO week+year / month+year
-//   3. For each group, UPSERT into daily_sales, weekly_sales,
-//      monthly_sales using INSERT ... ON DUPLICATE KEY UPDATE
-//      so existing rows are updated in-place, not duplicated.
-//
-// Safe to call multiple times — idempotent.
-// ─────────────────────────────────────────────────────────────
 router.post("/sync", async (req, res) => {
     try {
         // 1. Fetch all transaction log rows
@@ -87,7 +75,7 @@ router.post("/sync", async (req, res) => {
         for (const log of logs) {
             const date = new Date(log.timestamp);
 
-            // ── Daily key ──────────────────────────────────────
+            // ── Daily key 
             const dayKey = date.toISOString().slice(0, 10); // "2026-03-11"
 
             if (!byDay[dayKey]) {
@@ -97,7 +85,7 @@ router.post("/sync", async (req, res) => {
             byDay[dayKey].total_items_sold   += log.quantity || 0;
             byDay[dayKey].total_revenue      += parseFloat(log.subtotal) || 0;
 
-            // ── Weekly key ─────────────────────────────────────
+            // ── Weekly key 
             // ISO week: Monday-based week number
             const year      = date.getFullYear();
             const weekNum   = getISOWeekNumber(date);
@@ -110,7 +98,7 @@ router.post("/sync", async (req, res) => {
             byWeek[weekKey].total_items_sold   += log.quantity || 0;
             byWeek[weekKey].total_revenue      += parseFloat(log.subtotal) || 0;
 
-            // ── Monthly key ────────────────────────────────────
+            // ── Monthly key 
             const month     = date.getMonth() + 1; // 1-12
             const monthKey  = `${year}-${String(month).padStart(2, "0")}`;
 
@@ -179,15 +167,7 @@ router.post("/sync", async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────────────────────────
-// POST /sales/update-from-transaction
-//
-// Call this right after every new transaction is saved to
-// transaction_log. Body: { quantity, subtotal, timestamp }
-//
-// It upserts only the day/week/month that the transaction
-// belongs to, leaving all other rows untouched.
-// ─────────────────────────────────────────────────────────────
+
 router.post("/update-from-transaction", async (req, res) => {
     try {
         const { quantity, subtotal, timestamp } = req.body;
@@ -279,10 +259,10 @@ router.post("/update-from-transaction", async (req, res) => {
     }
 });
 
-// ─────────────────────────────────────────────────────────────
+// 
 // Helper: ISO 8601 week number (week starts Monday)
 // Returns 1–53
-// ─────────────────────────────────────────────────────────────
+// 
 function getISOWeekNumber(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
     // Set to nearest Thursday (makes the week year calculation correct)

@@ -26,74 +26,27 @@ export default function Transactions() {
     const [selectedReceipt, setSelectedReceipt] = useState({});
 
     const role = localStorage.getItem("role");
-
     const [profileOpen, setProfileOpen] = useState(false);
 
     const [form, setForm] = useState({ product: "", quantity: "" });
     const [payment, setPayment] = useState({ paymethod: "", amount: "", refnum: "" });
 
-    const doneBtn = document.getElementById('ServiceDoneButton');
-
     const userID = localStorage.getItem("user_id");
 
-    useEffect(() => {
+    // ── Fetch everything ──────────────────────────────────────
+    const fetchAll = () => {
         getDashboard(userID).then(res => setData(res.data));
         getProducts().then(res => setProducts(res.data));
         getCart().then(res => setCart(res.data));
         getLogs().then(res => setLogs(res.data));
         getServices().then(res => setServices(res.data));
+    };
+
+    useEffect(() => {
+        fetchAll();
     }, []);
 
     if (!data) return null;
-
-    const handleAdd = (e) => {
-        e.preventDefault();
-
-        addToCart(form).then(res => {
-            setCart(res.data);
-
-            setForm({
-                product: "",
-                quantity: ""
-            });
-        });
-    };
-
-
-    const handleDelete = (index) => {
-        deleteCartItem(index).then(res => setCart(res.data));
-    };
-
-    const handleCheckout = (e) => {
-        e.preventDefault();
-
-        checkout(payment).then(res => {
-            if (res.data.error) {
-                alert(res.data.error);
-            } else {
-                alert("Success Change: ₱" + res.data.change);
-
-                setCart([]);
-
-                setPayment({
-                    paymethod: "",
-                    amount: "",
-                    refnum: ""
-                });
-
-                setTimeout(() => {
-                    window.location.reload();
-                }, 1000);
-            }
-        });
-    };
-
-    const handleReceipt = (log) => {
-        setSelectedReceipt(log);
-        setReceiptOpen(true);
-    };
-
-    const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
 
     const today = new Date().toLocaleDateString("en-US", {
         year: "numeric",
@@ -101,9 +54,50 @@ export default function Transactions() {
         day: "numeric"
     });
 
-    const refreshPage = () => {
-        window.location.reload();
+    // ── Add to cart ───────────────────────────────────────────
+    const handleAdd = (e) => {
+        e.preventDefault();
+        addToCart(form).then(res => {
+            setCart(res.data);
+            setForm({ product: "", quantity: "" });
+        });
     };
+
+    // ── Remove from cart ──────────────────────────────────────
+    const handleDelete = (index) => {
+        deleteCartItem(index).then(res => setCart(res.data));
+    };
+
+    // ── Checkout ──────────────────────────────────────────────
+    const handleCheckout = (e) => {
+        e.preventDefault();
+        checkout(payment).then(res => {
+            if (res.data.error) {
+                alert(res.data.error);
+            } else {
+                alert("Success! Change: ₱" + res.data.change);
+                setCart([]);
+                setPayment({ paymethod: "", amount: "", refnum: "" });
+                // Re-fetch logs and services to reflect updated statuses
+                getLogs().then(r => setLogs(r.data));
+                getServices().then(r => setServices(r.data));
+            }
+        });
+    };
+
+    // ── Service: Pending → Payment ────────────────────────────
+    // Adds the service to the cart and sets its status to "Payment"
+    // so it waits for the cashier to collect payment before marking Done.
+    const handleServiceDone = (service_id) => {
+        doneService(service_id).then(res => {
+            // Update cart with the service item added
+            setCart(res.data);
+            // Refresh services list so the status shows "Payment"
+            getServices().then(r => setServices(r.data));
+        });
+    };
+
+    const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
 
     return (
         <div>
@@ -118,14 +112,17 @@ export default function Transactions() {
 
             <div className="main">
 
+                {/* ── Cart Section ─────────────────────────── */}
                 <div className="section-box cart-box">
                     <h3>Cart Section</h3>
-
                     <form onSubmit={handleAdd}>
                         <div className="cart-row">
                             <div className="cart-group products">
                                 <label>Products</label>
-                                <select onChange={e => setForm({ ...form, product: e.target.value })}>
+                                <select
+                                    value={form.product}
+                                    onChange={e => setForm({ ...form, product: e.target.value })}
+                                >
                                     <option value="">--Select--</option>
                                     {products.map(p => (
                                         <option key={p.product_name}>{p.product_name}</option>
@@ -135,14 +132,20 @@ export default function Transactions() {
 
                             <div className="cart-group quantity">
                                 <label>Quantity</label>
-                                <input type="number" required onChange={e => setForm({ ...form, quantity: e.target.value })} />
+                                <input
+                                    type="number"
+                                    required
+                                    value={form.quantity}
+                                    onChange={e => setForm({ ...form, quantity: e.target.value })}
+                                />
                             </div>
 
-                            <button type="submit" onClick={refreshPage}>Add to Cart</button>
+                            <button type="submit">Add to Cart</button>
                         </div>
                     </form>
                 </div>
 
+                {/* ── Payment (only shown when cart has items) ─ */}
                 {cart.length > 0 && (
                     <div className="section-box payment-box">
                         <h3>Payment</h3>
@@ -150,10 +153,12 @@ export default function Transactions() {
 
                         <form onSubmit={handleCheckout}>
                             <div className="payment-row">
-
                                 <div className="payment-group">
                                     <label>Payment Method</label>
-                                    <select onChange={e => setPayment({ ...payment, paymethod: e.target.value })}>
+                                    <select
+                                        value={payment.paymethod}
+                                        onChange={e => setPayment({ ...payment, paymethod: e.target.value })}
+                                    >
                                         <option value="">--Select--</option>
                                         <option value="GCash">GCash</option>
                                         <option value="Maya">Maya</option>
@@ -164,23 +169,32 @@ export default function Transactions() {
 
                                 <div className="payment-group">
                                     <label>Amount</label>
-                                    <input type="number" required onChange={e => setPayment({ ...payment, amount: e.target.value })} />
+                                    <input
+                                        type="number"
+                                        required
+                                        value={payment.amount}
+                                        onChange={e => setPayment({ ...payment, amount: e.target.value })}
+                                    />
                                 </div>
 
                                 <div className="payment-group">
                                     <label>Reference</label>
-                                    <input type="number" onChange={e => setPayment({ ...payment, refnum: e.target.value })} />
+                                    <input
+                                        type="number"
+                                        value={payment.refnum}
+                                        onChange={e => setPayment({ ...payment, refnum: e.target.value })}
+                                    />
                                 </div>
 
-                                <button type="submit" onClick={refreshPage}>Checkout</button>
+                                <button type="submit">Checkout</button>
                             </div>
                         </form>
                     </div>
                 )}
 
+                {/* ── Pending Cart Table ────────────────────── */}
                 <div className="section-box role-box">
                     <h3>Pending</h3>
-
                     <table>
                         <thead>
                             <tr>
@@ -192,7 +206,6 @@ export default function Transactions() {
                                 <th></th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {cart.map((item, index) => (
                                 <tr key={index}>
@@ -210,9 +223,9 @@ export default function Transactions() {
                     </table>
                 </div>
 
+                {/* ── Services Table ────────────────────────── */}
                 <div className="section-box role-box">
                     <h3>Services</h3>
-
                     <table>
                         <thead>
                             <tr>
@@ -222,7 +235,6 @@ export default function Transactions() {
                                 <th></th>
                             </tr>
                         </thead>
-
                         <tbody>
                             {services.map(s => (
                                 <tr key={s.service_id}>
@@ -230,11 +242,24 @@ export default function Transactions() {
                                     <td>{s.service_ordered}</td>
                                     <td>{s.status}</td>
                                     <td>
-                                        {s.status === "Pending" &&
-                                            <button id="ServiceDoneButton" onClick={() => doneService(s.service_id).then(res => setCart(res.data))} onClick={refreshPage}>
+                                        {/* Pending → click Done → adds to cart, status becomes "Payment" */}
+                                        {s.status === "Pending" && (
+                                            <button onClick={() => handleServiceDone(s.service_id)}>
                                                 Done
                                             </button>
-                                        }
+                                        )}
+                                        {/* Payment → waiting for cashier checkout, no button needed */}
+                                        {s.status === "Payment" && (
+                                            <span style={{ color: "#f59e0b", fontWeight: 600, fontSize: 13 }}>
+                                                Awaiting Payment
+                                            </span>
+                                        )}
+                                        {/* Done = fully paid */}
+                                        {s.status === "Done" && (
+                                            <span style={{ color: "#10b981", fontWeight: 600, fontSize: 13 }}>
+                                                ✓ Paid
+                                            </span>
+                                        )}
                                     </td>
                                 </tr>
                             ))}
@@ -242,10 +267,10 @@ export default function Transactions() {
                     </table>
                 </div>
 
+                {/* ── Logs (Manager only) ───────────────────── */}
                 {role === "Manager" && (
                     <div className="section-box role-box">
                         <h3>Logs</h3>
-
                         <table>
                             <thead>
                                 <tr>
@@ -262,14 +287,16 @@ export default function Transactions() {
                                     <th>Time</th>
                                 </tr>
                             </thead>
-
                             <tbody>
                                 {logs.map(l => (
                                     <tr key={l.log_id}>
                                         <td>
                                             <button
                                                 className="empDelButton"
-                                                onClick={() => handleReceipt(l)}
+                                                onClick={() => {
+                                                    setSelectedReceipt(l);
+                                                    setReceiptOpen(true);
+                                                }}
                                             >
                                                 Receipt
                                             </button>
@@ -290,6 +317,7 @@ export default function Transactions() {
                         </table>
                     </div>
                 )}
+
             </div>
         </div>
     );
