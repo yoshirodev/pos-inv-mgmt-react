@@ -6,7 +6,7 @@ HOW TO RUN PROGRAM FOR DEVELOPERS
 
 npm run dev in the root folder
 
-# 🛒 POS & Inventory Management System (React + Node.js)
+# 🛒 STREAMLINE: POS & Inventory Management System (React + Node.js)
 
 A full-stack **Point of Sale (POS) and Inventory Management System** built using **React.js, Node.js, Express, and MySQL**.  
 This system helps manage products, track inventory, and record sales efficiently in a structured and automated way.
