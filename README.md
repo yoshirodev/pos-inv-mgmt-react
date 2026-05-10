@@ -45,3 +45,4 @@ This system helps manage products, track inventory, and record sales efficiently
 ## 🏗️ Project Architecture
 
 The system follows a **client-server architecture**:
+debug
