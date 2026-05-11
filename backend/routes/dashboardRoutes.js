@@ -50,13 +50,18 @@ router.get("/:id", (req, res) => {
 });
 
 router.delete("/:id", (req, res) => {
-    const userRole = req.body.role; // or from token/session
+    const { role, requestingUserID } = req.body;
 
-    if (userRole !== "HR") {
+    if (role !== "Manager") {
         return res.status(403).json({ error: "Forbidden" });
     }
 
     const id = req.params.id;
+
+    // Prevent self-deletion
+    if (String(id) === String(requestingUserID)) {
+        return res.status(400).json({ error: "You cannot delete your own account." });
+    }
 
     db.query("DELETE FROM logindata WHERE accID = ?", [id], () => {
         res.json({ message: "deleted" });

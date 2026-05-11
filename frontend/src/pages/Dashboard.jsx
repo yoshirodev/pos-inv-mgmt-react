@@ -2,8 +2,55 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
-import { getDashboard, deleteUser, createUser } from "../services/api";
+import { getDashboard, deleteUser, createUser, getRevenueOverTime, getTopProducts } from "../services/api";
+import {
+    LineChart, Line,
+    BarChart, Bar,
+    XAxis, YAxis, CartesianGrid,
+    Tooltip, ResponsiveContainer, Cell
+} from "recharts";
 
+// ── Bar colors for top products ───────────────────────────────
+const BAR_COLORS = ["#2563eb", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#06b6d4"];
+
+// ── Custom tooltip: Revenue line chart ───────────────────────
+function RevenueTooltip({ active, payload, label }) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div style={{
+            background: "#fff", border: "1px solid #e2e8f0",
+            borderRadius: 8, padding: "10px 14px",
+            boxShadow: "0 4px 12px rgba(0,0,0,.08)"
+        }}>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>{label}</div>
+            <div style={{ fontWeight: 700, color: "#2563eb", fontSize: 15 }}>
+                ₱{Number(payload[0].value).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+            </div>
+        </div>
+    );
+}
+
+// ── Custom tooltip: Top products bar chart ────────────────────
+function ProductTooltip({ active, payload, label }) {
+    if (!active || !payload?.length) return null;
+    return (
+        <div style={{
+            background: "#fff", border: "1px solid #e2e8f0",
+            borderRadius: 8, padding: "10px 14px",
+            boxShadow: "0 4px 12px rgba(0,0,0,.08)"
+        }}>
+            <div style={{ fontSize: 12, color: "#64748b", marginBottom: 4 }}>{label}</div>
+            <div style={{ fontWeight: 700, color: "#1e293b", fontSize: 14 }}>
+                ₱{Number(payload[0].value).toLocaleString("en-PH", { minimumFractionDigits: 2 })}
+            </div>
+            <div style={{ fontSize: 12, color: "#64748b" }}>
+                {payload[0].payload.total_qty} units sold
+            </div>
+        </div>
+    );
+}
+
+// ── Empty form state ──────────────────────────────────────────
 const EMPTY_FORM = {
     lastname: "", firstname: "", middlename: "",
     birthdate: "", gender: "Male", phonenumber: "",
@@ -11,23 +58,61 @@ const EMPTY_FORM = {
 };
 
 export default function Dashboard() {
-    const [data, setData] = useState(null);
+    const [data, setData]           = useState(null);
     const [profileOpen, setProfileOpen] = useState(false);
 
-    // Account creation form state
-    const [showForm, setShowForm] = useState(false);
-    const [formData, setFormData] = useState(EMPTY_FORM);
-    const [formError, setFormError] = useState("");
+    // Chart data
+    const [revenueData, setRevenueData] = useState([]);
+    const [topProducts, setTopProducts] = useState([]);
+
+    // Account creation form
+    const [showForm, setShowForm]     = useState(false);
+    const [formData, setFormData]     = useState(EMPTY_FORM);
+    const [formError, setFormError]   = useState("");
     const [formSuccess, setFormSuccess] = useState("");
     const [submitting, setSubmitting] = useState(false);
 
     const userID = localStorage.getItem("user_id");
 
     useEffect(() => {
-        getDashboard(userID).then(res => setData(res.data));
+        getDashboard(userID).then(res => {
+            setData(res.data);
+            const role = res.data.user.accountType;
+
+            // Manager gets both charts
+            if (role === "Manager") {
+                getRevenueOverTime().then(r => {
+                    setRevenueData(r.data.map(d => ({
+                        ...d,
+                        label: new Date(d.sale_date).toLocaleDateString("en-PH", { month: "short", day: "numeric" }),
+                        total_revenue: parseFloat(d.total_revenue),
+                    })));
+                });
+                getTopProducts().then(r => {
+                    setTopProducts(r.data.map(d => ({
+                        ...d,
+                        short_name: d.product_name.length > 12 ? d.product_name.slice(0, 11) + "…" : d.product_name,
+                        total_revenue: parseFloat(d.total_revenue),
+                    })));
+                });
+            }
+
+            // Employee gets top products only
+            if (role === "Employee") {
+                getTopProducts().then(r => {
+                    setTopProducts(r.data.map(d => ({
+                        ...d,
+                        short_name: d.product_name.length > 12 ? d.product_name.slice(0, 11) + "…" : d.product_name,
+                        total_revenue: parseFloat(d.total_revenue),
+                    })));
+                });
+            }
+        });
     }, []);
 
     if (!data) return null;
+
+    const role = data.user.accountType;
 
     const today = new Date().toLocaleDateString("en-US", {
         year: "numeric", month: "long", day: "numeric"
@@ -41,22 +126,23 @@ export default function Dashboard() {
     const handleDelete = (id) => {
         const confirm = window.confirm("Are you sure to delete this employee?");
         if (!confirm) return;
-        deleteUser(id).then(() => {
-            setData({
-                ...data,
-                accounts: data.accounts.filter(a => a.accID !== id)
-            });
+
+        deleteUser(id).then(res => {
+            if (res.data.error) {
+                alert(res.data.error);
+                return;
+            }
+            setData({ ...data, accounts: data.accounts.filter(a => a.accID !== id) });
         });
     };
 
-    // ── Handle form input change ──────────────────────────────
+    // ── Form handlers ─────────────────────────────────────────
     const handleChange = (e) => {
         setFormData({ ...formData, [e.target.name]: e.target.value });
         setFormError("");
         setFormSuccess("");
     };
 
-    // ── Submit new account ────────────────────────────────────
     const handleCreate = (e) => {
         e.preventDefault();
         setSubmitting(true);
@@ -69,13 +155,8 @@ export default function Dashboard() {
             } else {
                 setFormSuccess("Account created successfully!");
                 setFormData(EMPTY_FORM);
-                // Re-fetch dashboard to update the accounts table
                 getDashboard(userID).then(r => setData(r.data));
-                // Auto-close form after 1.5s
-                setTimeout(() => {
-                    setShowForm(false);
-                    setFormSuccess("");
-                }, 1500);
+                setTimeout(() => { setShowForm(false); setFormSuccess(""); }, 1500);
             }
         }).catch(err => {
             setFormError(err.response?.data?.error || "Something went wrong.");
@@ -91,6 +172,8 @@ export default function Dashboard() {
             <ProfileBox user={data.user} visible={profileOpen} />
 
             <div className="main">
+
+                {/* ── Welcome + Stat Cards ──────────────────── */}
                 <section className="main-section">
                     <h1 style={{ color: "#2563eb" }}>WELCOME BACK, {data.user.firstname}!</h1>
                     <div className="role-box">
@@ -119,10 +202,98 @@ export default function Dashboard() {
                     </div>
                 </section>
 
+                {/* ════════════════════════════════════════════
+                    CHARTS — side by side
+                    Manager: Revenue Over Time + Top Products
+                    Employee: Top Products only (full width)
+                ════════════════════════════════════════════ */}
+                {(role === "Manager" || role === "Employee") && (
+                    <div className="charts-row">
+
+                        {/* Revenue Over Time — Manager only */}
+                        {role === "Manager" && (
+                            <div className="role-box chart-box">
+                                <h3>
+                                    Revenue Over Time
+                                    <span className="chart-subtitle"> — Last 14 Days</span>
+                                </h3>
+                                {revenueData.length === 0 ? (
+                                    <p className="chart-empty">No transaction data yet.</p>
+                                ) : (
+                                    <ResponsiveContainer width="100%" height={240}>
+                                        <LineChart data={revenueData} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                                            <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                                            <XAxis
+                                                dataKey="label"
+                                                tick={{ fontSize: 11, fill: "#64748b" }}
+                                                axisLine={false}
+                                                tickLine={false}
+                                            />
+                                            <YAxis
+                                                tick={{ fontSize: 11, fill: "#64748b" }}
+                                                axisLine={false}
+                                                tickLine={false}
+                                                tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`}
+                                            />
+                                            <Tooltip content={<RevenueTooltip />} />
+                                            <Line
+                                                type="monotone"
+                                                dataKey="total_revenue"
+                                                stroke="#2563eb"
+                                                strokeWidth={2.5}
+                                                dot={{ r: 4, fill: "#2563eb", strokeWidth: 0 }}
+                                                activeDot={{ r: 6 }}
+                                            />
+                                        </LineChart>
+                                    </ResponsiveContainer>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Top Selling Products — Manager + Employee */}
+                        <div className={`role-box chart-box${role === "Employee" ? " chart-box--full" : ""}`}>
+                            <h3>
+                                Top Selling Products
+                                <span className="chart-subtitle"> — by Revenue</span>
+                            </h3>
+                            {topProducts.length === 0 ? (
+                                <p className="chart-empty">No transaction data yet.</p>
+                            ) : (
+                                <ResponsiveContainer width="100%" height={240}>
+                                    <BarChart data={topProducts} margin={{ top: 10, right: 16, left: 0, bottom: 0 }}>
+                                        <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                                        <XAxis
+                                            dataKey="short_name"
+                                            tick={{ fontSize: 11, fill: "#64748b" }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                        />
+                                        <YAxis
+                                            tick={{ fontSize: 11, fill: "#64748b" }}
+                                            axisLine={false}
+                                            tickLine={false}
+                                            tickFormatter={v => `₱${(v / 1000).toFixed(0)}k`}
+                                        />
+                                        <Tooltip content={<ProductTooltip />} />
+                                        <Bar dataKey="total_revenue" radius={[6, 6, 0, 0]}>
+                                            {topProducts.map((_, i) => (
+                                                <Cell key={i} fill={BAR_COLORS[i % BAR_COLORS.length]} />
+                                            ))}
+                                        </Bar>
+                                    </BarChart>
+                                </ResponsiveContainer>
+                            )}
+                        </div>
+
+                    </div>
+                )}
+
+                {/* ════════════════════════════════════════════
+                    MANAGER — Account Management Table
+                ════════════════════════════════════════════ */}
                 <section className="role-section">
-                    {data.user.accountType === "Manager" && (
+                    {role === "Manager" && (
                         <>
-                            {/* ── Account Management Table ─────────── */}
                             <div className="role-box">
                                 <button
                                     className="btn-account-creation"
@@ -182,13 +353,12 @@ export default function Dashboard() {
                                 </table>
                             </div>
 
-                            {/* ── Account Creation Form (appears below) */}
+                            {/* Account Creation Form */}
                             {showForm && (
                                 <div className="role-box account-creation-form">
-                                    <h2>
+                                    <h3>
                                         <i className="fa-solid fa-user-plus"></i> Create New Account
-                                    </h2>
-
+                                    </h3>
                                     <form onSubmit={handleCreate}>
                                         <div className="form-row">
                                             <div className="form-group">
@@ -252,7 +422,6 @@ export default function Dashboard() {
                                                 <select name="accountType" value={formData.accountType} onChange={handleChange}>
                                                     <option value="Manager">Manager</option>
                                                     <option value="Employee">Employee</option>
-                                                    <option value="HR">HR</option>
                                                 </select>
                                             </div>
                                         </div>
@@ -283,6 +452,7 @@ export default function Dashboard() {
                         </>
                     )}
                 </section>
+
             </div>
         </div>
     );

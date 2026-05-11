@@ -58,6 +58,11 @@ export default function Transactions() {
     const handleAdd = (e) => {
         e.preventDefault();
         addToCart(form).then(res => {
+            // Backend returns { error: "..." } when something goes wrong
+            if (res.data.error) {
+                alert(res.data.error);
+                return;
+            }
             setCart(res.data);
             setForm({ product: "", quantity: "" });
         });
