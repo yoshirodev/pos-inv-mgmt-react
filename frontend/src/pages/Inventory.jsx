@@ -79,6 +79,7 @@ export default function Inventory() {
         if (!confirm) return;
         deleteProduct(id).then(() => {
             setProducts(products.filter(p => p.id !== id));
+            window.location.reload();
         });
     };
 

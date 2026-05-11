@@ -19,7 +19,9 @@ export const deleteUser = (id) => API.delete(`/dashboard/${id}`);
 export const getInventory = () => API.get("/inventory");
 export const createProduct = (data) => API.post("/inventory/create", data);
 export const updateProduct = (id, data) => API.put(`/inventory/${id}`, data);
-export const deleteProduct = (id) => API.delete(`/inventory/${id}`);
+export const deleteProduct = (id) => API.delete(`/inventory/${id}`, {
+    headers: { role: localStorage.getItem("role") }
+});
 
 export const getProducts = () => API.get("/transactions/products");
 
