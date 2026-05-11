@@ -146,7 +146,7 @@ export default function Transactions() {
                 {/* ── Payment (only shown when cart has items) ─ */}
                 {cart.length > 0 && (
                     <div className="section-box payment-box">
-                        <h3>Payment</h3>
+                        <h2>Payment</h2>
                         <h4>Total: ₱{total}</h4>
 
                         <form onSubmit={handleCheckout}>
@@ -192,7 +192,7 @@ export default function Transactions() {
 
                 {/* ── Pending Cart Table ────────────────────── */}
                 <div className="section-box role-box">
-                    <h3>Pending</h3>
+                    <h2>Pending</h2>
                     <table>
                         <thead>
                             <tr>
@@ -223,7 +223,7 @@ export default function Transactions() {
 
                 {/* ── Services Table ────────────────────────── */}
                 <div className="section-box role-box">
-                    <h3>Services</h3>
+                    <h2>Services</h2>
                     <table>
                         <thead>
                             <tr>
@@ -268,7 +268,7 @@ export default function Transactions() {
                 {/* ── Logs (Manager only) ───────────────────── */}
                 {role === "Manager" && (
                     <div className="section-box role-box">
-                        <h3>Logs</h3>
+                        <h2>Logs</h2>
                         <table>
                             <thead>
                                 <tr>
