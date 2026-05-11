@@ -14,7 +14,11 @@ export const login = (data) => API.post("/auth/login", data);
 export const createUser = (data) => API.post("/auth/register", data); // ← new
 
 export const getDashboard = (id) => API.get(`/dashboard/${id}`);
-export const deleteUser = (id) => API.delete(`/dashboard/${id}`);
+
+export const deleteUser = (id) => {
+    const role = localStorage.getItem("role");
+    return API.delete(`/dashboard/${id}`, { data: { role } });
+};
 
 export const getInventory = () => API.get("/inventory");
 export const createProduct = (data) => API.post("/inventory/create", data);

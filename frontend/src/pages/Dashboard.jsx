@@ -37,17 +37,34 @@ export default function Dashboard() {
         hour: "2-digit", minute: "2-digit"
     });
 
-    // ── Delete account ────────────────────────────────────────
-    const handleDelete = (id) => {
-        const confirm = window.confirm("Are you sure to delete this employee?");
-        if (!confirm) return;
-        deleteUser(id).then(() => {
-            setData({
-                ...data,
-                accounts: data.accounts.filter(a => a.accID !== id)
-            });
+const handleDelete = (id) => {
+    const role = localStorage.getItem("role");
+
+    const firstConfirm = window.confirm("Are you sure you want to delete this employee?");
+    if (!firstConfirm) return;
+
+    if (role === "HR") {
+        const secondConfirm = window.confirm("This action is permanent and cannot be undone. Confirm again?");
+        if (!secondConfirm) return;
+    }
+
+    deleteUser(id).then(() => {
+        const currentUserId = localStorage.getItem("user_id");
+
+        if (currentUserId === String(id)) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("role");
+            window.location.href = "/Login";
+            return;
+        }
+
+        setData({
+            ...data,
+            accounts: data.accounts.filter(a => a.accID !== id)
         });
-    };
+    });
+};
 
     // ── Handle form input change ──────────────────────────────
     const handleChange = (e) => {

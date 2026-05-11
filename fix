@@ -1,3 +1,9 @@
 
 add a registration for HR role
 add a Charts in Dashboard for Manager
+
+fix if statement in handleDelete(Dashboard.jsx) should log out the manager or HR if they deleted themselves
+
+
+
+
