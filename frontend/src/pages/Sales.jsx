@@ -9,11 +9,6 @@ import {
     getMonthlySales,
 } from "../services/api";
 
-// ─────────────────────────────────────────────────────────────
-// Calls the backend sync endpoint.
-// Safe to call any time — it re-reads transaction_log and
-// recalculates all daily/weekly/monthly rows from scratch.
-// ─────────────────────────────────────────────────────────────
 async function syncSalesFromLogs() {
     const res = await fetch("/api/sales/sync", { method: "POST" });
     if (!res.ok) throw new Error("Sync failed");
@@ -50,10 +45,6 @@ export default function Sales() {
         year: "numeric", month: "long", day: "numeric",
     });
 
-    // ── Sync handler ──────────────────────────────────────────
-    // Triggered by the "Sync from Logs" button.
-    // After the backend finishes grouping all transactions into
-    // daily/weekly/monthly rows, we re-fetch to show updated data.
     const handleSync = async () => {
         setSyncing(true);
         setSyncMsg("");
@@ -119,7 +110,7 @@ export default function Sales() {
 
                         {/* ── Daily Sales ──────────────────────────────── */}
                         <div className="role-box">
-                            <h3>Daily Sales</h3>
+                            <h2>Daily Sales</h2>
                             <table>
                                 <thead>
                                     <tr>
@@ -154,7 +145,7 @@ export default function Sales() {
 
                         {/* ── Weekly Sales ─────────────────────────────── */}
                         <div className="role-box">
-                            <h3>Weekly Sales</h3>
+                            <h2>Weekly Sales</h2>
                             <table>
                                 <thead>
                                     <tr>
@@ -191,7 +182,7 @@ export default function Sales() {
 
                         {/* ── Monthly Sales ────────────────────────────── */}
                         <div className="role-box">
-                            <h3>Monthly Sales</h3>
+                            <h2>Monthly Sales</h2>
                             <table>
                                 <thead>
                                     <tr>

@@ -17,7 +17,7 @@ router.get("/:id", (req, res) => {
         const salesQuery = "SELECT SUM(subtotal) AS today_sales FROM transaction_log WHERE DATE(timestamp) = CURDATE()";
 
         // 🔥 ONLY HR CAN GET ACCOUNTS
-        if (user.accountType === "HR") {
+        if (user.accountType === "Manager") {
             const accountsQuery = "SELECT accID, firstname, middlename, lastname, birthdate, gender, email, phonenumber, accountType, username FROM logindata";
 
             db.query(accountsQuery, (err, accResult) => {

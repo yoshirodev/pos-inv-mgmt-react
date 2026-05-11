@@ -1,234 +1,618 @@
-/* ===================================================
-   BASE & RESET
-=================================================== */
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&family=Syne:wght@600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Syne:wght@600;700&display=swap');
 
-*, *::before, *::after {
+*,
+*::before,
+*::after {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
 }
 
 :root {
-  --navy:       #0f172a;
-  --navy-mid:   #1e293b;
+  /* Core colors */
+  --navy: #0f172a;
+  --navy-mid: #1e293b;
   --navy-light: #334155;
-  --slate:      #64748b;
-  --slate-light:#94a3b8;
-  --border:     #e2e8f0;
-  --bg:         #f8fafc;
-  --white:      #ffffff;
-  --blue:       #2563eb;
-  --blue-dark:  #1d4ed8;
-  --blue-soft:  #eff6ff;
-  --green:      #10b981;
-  --red:        #ef4444;
-  --amber:      #f59e0b;
 
-  --shadow-sm:  0 1px 3px rgba(15,23,42,.06), 0 1px 2px rgba(15,23,42,.04);
-  --shadow-md:  0 4px 16px rgba(15,23,42,.08), 0 1px 4px rgba(15,23,42,.04);
-  --shadow-lg:  0 12px 40px rgba(15,23,42,.10), 0 2px 8px rgba(15,23,42,.05);
+  --slate: #64748b;
+  --slate-light: #94a3b8;
 
-  --radius-sm:  6px;
-  --radius-md:  10px;
-  --radius-lg:  14px;
+  --bg: #f8fafc;
+  --white: #ffffff;
+  --border: #e2e8f0;
 
-  --sidebar-w:  240px;
-  --topbar-h:   64px;
+  /* Main brand color */
+  --blue: #2563eb;
+  --blue-dark: #1d4ed8;
+  --blue-soft: #eff6ff;
 
-  --font-body:  'DM Sans', sans-serif;
-  --font-head:  'Syne', sans-serif;
+  /* Soft light blue used for role titles */
+  --blue-light: #60a5fa;
+  --blue-light-bg: #f0f9ff;
+  --blue-light-border: #bfdbfe;
+
+  --green: #10b981;
+  --green-dark: #059669;
+
+  --red: #ef4444;
+  --red-dark: #dc2626;
+
+  --amber: #f59e0b;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-md: 0 6px 18px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(15, 23, 42, 0.04);
+  --shadow-lg: 0 14px 40px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(15, 23, 42, 0.06);
+
+  /* Rounded corners */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 16px;
+
+  /* Layout sizes */
+  --sidebar-w: 240px;
+  --topbar-h: 64px;
+
+  /* Fonts */
+  --font-body: 'DM Sans', sans-serif;
+  --font-head: 'Syne', sans-serif;
+
+  /* Animation */
+  --transition: 0.2s ease;
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
   font-family: var(--font-body);
-  background: var(--bg);
-  color: var(--navy-mid);
   font-size: 14px;
   line-height: 1.6;
+  color: var(--navy-mid);
+  background: var(--bg);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-/* ===================================================
-   LOGIN
-=================================================== */
+img {
+  display: block;
+  max-width: 100%;
+}
+
+/*
+=====================================================
+  Typography
+  Shared heading styles so every page looks consistent.
+=====================================================
+*/
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--font-head);
+  color: var(--navy-mid);
+}
+
+/*
+=====================================================
+  Reusable Card Style
+  Used by cards, role boxes, and content sections.
+=====================================================
+*/
+
+.card,
+.section-box,
+.role-box,
+.inv-card,
+.profile-box {
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-md);
+}
+
+.card:hover,
+.section-box:hover,
+.inv-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
+}
+
+.card,
+.section-box,
+.role-box,
+.inv-card {
+  transition: transform var(--transition), box-shadow var(--transition);
+}
+
+/*
+=====================================================
+  Shared Form Controls
+  All inputs use the same spacing and focus state.
+=====================================================
+*/
+
+input,
+select,
+textarea {
+  width: 100%;
+  padding: 11px 14px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--white);
+  color: var(--navy-mid);
+  font-family: var(--font-body);
+  font-size: 14px;
+  outline: none;
+  transition: border-color var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--slate-light);
+}
+
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.1);
+  background: #fcfdff;
+}
+
+label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  letter-spacing: 0.3px;
+}
+
+/*
+=====================================================
+  Shared Button Styles
+  Every button starts from the same base style.
+=====================================================
+*/
+
+button {
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 10px 18px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: transform var(--transition), box-shadow var(--transition), background var(--transition);
+}
+
+button:hover {
+  transform: translateY(-1px);
+}
+
+button:active {
+  transform: translateY(0);
+}
+
+.btn-primary,
+.inv-role-box button,
+.inv-control-box button,
+.login-box button,
+.btn-account-creation,
+.btn-submit-account {
+  background: var(--blue);
+  color: var(--white);
+}
+
+.btn-primary:hover,
+.inv-role-box button:hover,
+.inv-control-box button:hover,
+.login-box button:hover,
+.btn-account-creation:hover,
+.btn-submit-account:hover {
+  background: var(--blue-dark);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+}
+
+.btn-success,
+.cart-box button,
+.payment-box button {
+  background: var(--green);
+  color: var(--white);
+}
+
+.btn-success:hover,
+.cart-box button:hover,
+.payment-box button:hover {
+  background: var(--green-dark);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+}
+
+.btn-danger,
+.delete-button-inv,
+.logout-btn,
+.btn-cancel-account {
+  background: #fef2f2;
+  color: var(--red);
+  border: 1px solid #fecaca;
+}
+
+.btn-danger:hover,
+.delete-button-inv:hover,
+.logout-btn:hover,
+.btn-cancel-account:hover {
+  background: #fee2e2;
+}
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--navy-mid);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: #eef2f7;
+}
+
+/*
+=====================================================
+  Login Page
+  Keeps the sign-in screen clean and centered.
+=====================================================
+*/
+
 .login-container {
   min-height: 100vh;
+  display: grid;
+  grid-template-columns: 1.2fr 0.8fr;
+  background: linear-gradient(135deg, #90e3ff 0%, #3172ff 45%, #eff6ff 100%);
+}
+
+/* Left side hero section */
+.login-hero {
+  position: relative;
+  overflow: hidden;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, #0f172a 0%, #1e3a8a 100%);
+  padding: 48px;
+  background:
+    linear-gradient(rgba(10, 37, 64, 0.35), rgba(10, 37, 64, 0.45)),
+    url("/images/water-banner.jpg") center/cover no-repeat;
+}
+
+/* Soft floating blue blobs to make it feel more alive */
+.login-hero::before,
+.login-hero::after {
+  content: "";
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(40px);
+  opacity: 0.35;
+}
+
+.login-hero::before {
+  width: 260px;
+  height: 260px;
+  background: #7dd3fc;
+  top: 10%;
+  left: 10%;
+  animation: floatBlob 12s ease-in-out infinite;
+}
+
+.login-hero::after {
+  width: 320px;
+  height: 320px;
+  background: #38bdf8;
+  bottom: 8%;
+  right: 8%;
+  animation: floatBlob 14s ease-in-out infinite reverse;
+}
+
+/* Centered glass card that shows logo + rotating info */
+.hero-overlay {
+  position: relative;
+  z-index: 2;
+  width: min(100%, 560px);
+  padding: 40px;
+  border-radius: 28px;
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 25px 60px rgba(15, 23, 42, 0.18);
+  color: #ffffff;
+}
+
+/* Perfect place for your company logo */
+.hero-logo {
+  width: 110px;
+  height: 110px;
+  margin: 0 auto 22px;
+  padding: 12px;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.22);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.12);
+}
+
+.hero-logo img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* Company title on the hero side */
+.hero-company {
+  text-align: center;
+  font-family: var(--font-head);
+  font-size: 34px;
+  font-weight: 700;
+  line-height: 1.2;
+  margin-bottom: 12px;
+}
+
+.hero-tagline {
+  text-align: center;
+  font-size: 15px;
+  line-height: 1.7;
+  color: rgba(255, 255, 255, 0.92);
+  margin-bottom: 28px;
+}
+
+/* Rotating info box */
+.hero-slider {
+  position: relative;
+  min-height: 120px;
+}
+
+/* Each slide fades in and out automatically */
+.hero-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  animation: heroFade 12s infinite;
+}
+
+.hero-slide:nth-child(1) {
+  animation-delay: 0s;
+}
+
+.hero-slide:nth-child(2) {
+  animation-delay: 4s;
+}
+
+.hero-slide:nth-child(3) {
+  animation-delay: 8s;
+}
+
+.hero-slide h3 {
+  font-family: var(--font-head);
+  font-size: 18px;
+  margin-bottom: 8px;
+  color: #ffffff;
+}
+
+.hero-slide p {
+  font-size: 14px;
+  line-height: 1.8;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+/* Right side login area */
+.login-panel {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 48px;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(6px);
 }
 
 .login-box {
-  width: 400px;
-  background: var(--white);
-  padding: 40px;
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-lg);
+  width: 100%;
+  max-width: 420px;
+  padding: 44px;
+  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(191, 219, 254, 0.8);
+  box-shadow: 0 25px 60px rgba(14, 116, 144, 0.12);
   text-align: center;
 }
 
 .login-title {
-  font-family: var(--font-head);
-  font-size: 26px;
+  font-size: 28px;
   font-weight: 700;
-  color: var(--blue);
+  color: #0f172a;
   margin-bottom: 6px;
 }
 
 .login-box h2 {
+  font-family: var(--font-body);
   font-size: 15px;
   font-weight: 400;
-  color: var(--slate);
+  color: #64748b;
   margin-bottom: 28px;
 }
 
 .login-box input {
-  width: 100%;
   margin-bottom: 14px;
-  padding: 11px 14px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--navy-mid);
-  outline: none;
-  transition: border-color .2s;
-}
-
-.login-box input:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
 }
 
 .login-box button {
   width: 100%;
   padding: 12px;
-  background: var(--blue);
-  color: var(--white);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 15px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .2s, transform .15s;
 }
 
-.login-box button:hover {
-  background: var(--blue-dark);
-  transform: translateY(-1px);
+@keyframes heroFade {
+  0%, 28% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  33%, 100% {
+    opacity: 0;
+    transform: translateY(8px);
+  }
 }
 
-/* ===================================================
-   SIDEBAR
-=================================================== */
+/*
+=====================================================
+  Sidebar Navigation
+  Dark sidebar with subtle hover states.
+=====================================================
+*/
+
 .sidebar {
+  position: fixed;
+  top: 0;
+  left: 0;
   width: var(--sidebar-w);
   height: 100vh;
-  background: var(--navy);
-  position: fixed;
-  left: 0;
-  top: 0;
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+
+  /* Clean water-inspired blue gradient */
+  background: #0f4c81;
+
+  /* Subtle depth */
+  box-shadow: 6px 0 30px rgba(15, 76, 129, 0.18);
+
   z-index: 100;
 }
 
 .sidebar-logo {
   padding: 22px 24px 16px;
-  font-family: var(--font-head);
   font-size: 18px;
   font-weight: 700;
   color: var(--white);
-  letter-spacing: .3px;
-  border-bottom: 1px solid rgba(255,255,255,.06);
+  letter-spacing: 0.3px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* Logo area */
+.logo-box {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 20px;
+  margin-bottom: 10px;
+}
+
+.logo-box img {
+  width: 120px;
+  height: auto;
+  object-fit: contain;
+
+  /* Makes logo stand out a bit more */
+  filter: drop-shadow(0 6px 12px rgba(0, 0, 0, 0.15));
+}
+
+/* Date card */
 .date-box {
-  margin: 16px 16px 8px;
+  margin: 16px;
   padding: 12px 14px;
-  background: rgba(255,255,255,.05);
-  border: 1px solid rgba(255,255,255,.08);
-  border-radius: var(--radius-md);
-  color: var(--slate-light);
-  font-size: 12px;
   text-align: center;
-  line-height: 1.5;
+  border-radius: var(--radius-md);
+
+  background: rgba(255, 255, 255, 0.10);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+
+  color: rgba(255, 255, 255, 0.78);
+  font-size: 12px;
 }
 
 .date-box strong {
   display: block;
+  color: #ffffff;
   font-size: 14px;
-  color: var(--white);
   font-weight: 600;
 }
 
+/* Navigation container */
 .sidebar-nav {
-  padding: 8px 0;
   flex: 1;
+  padding: 8px 0;
 }
 
+/* Small section labels like "MAIN MENU" */
 .sidebar-label {
   padding: 12px 20px 4px;
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 1px;
   text-transform: uppercase;
-  color: var(--slate);
+  color: rgba(255, 255, 255, 0.55);
 }
 
+/* Navigation links */
 .sidebar a {
   display: flex;
   align-items: center;
   gap: 10px;
+  margin: 2px 8px;
   padding: 11px 20px;
-  text-decoration: none;
-  color: #94a3b8;
+  border-radius: var(--radius-sm);
+
+  color: rgba(255, 255, 255, 0.78);
   font-size: 14px;
   font-weight: 500;
-  border-radius: 0;
-  transition: background .15s, color .15s;
-  margin: 1px 8px;
-  border-radius: var(--radius-sm);
+  text-decoration: none;
+
+  transition:
+    background 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease;
 }
 
-.sidebar a:hover,
+/* Hover effect */
+.sidebar a:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+/* Active page */
 .sidebar a.active {
-  background: rgba(255,255,255,.07);
-  color: var(--white);
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-weight: 600;
+  box-shadow:
+    inset 3px 0 0 #7dd3fc,
+    0 6px 18px rgba(0, 0, 0, 0.10);
 }
 
-.sidebar a.active {
-  background: var(--blue);
-  color: var(--white);
-}
+/*
+=====================================================
+  Top Bar
+=====================================================
+*/
 
-/* ===================================================
-   TOPBAR
-=================================================== */
 .topbar {
   position: fixed;
+  top: 0;
   left: var(--sidebar-w);
   right: 0;
-  top: 0;
   height: var(--topbar-h);
-  background: var(--white);
-  border-bottom: 1px solid var(--border);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 28px;
-  z-index: 90;
+  background: var(--white);
+  border-bottom: 1px solid var(--border);
   box-shadow: var(--shadow-sm);
+  z-index: 90;
 }
 
 .topbar-title {
-  font-family: var(--font-head);
   font-size: 17px;
   font-weight: 700;
-  color: var(--navy-mid);
 }
 
 .topbar-actions {
@@ -241,222 +625,81 @@ body {
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--bg);
-  border: 1px solid var(--border);
   padding: 7px 14px;
+  border: 1px solid var(--border);
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 500;
+  background: var(--bg);
   color: var(--navy-mid);
-  transition: background .15s, transform .15s;
 }
 
 .profile-btn:hover {
-  background: var(--border);
-  transform: translateY(-1px);
+  background: #eef2f7;
 }
 
-.logout-btn {
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  padding: 7px 16px;
-  color: var(--red);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background .15s, transform .15s;
-}
-
-.logout-btn:hover {
-  background: #fee2e2;
-  transform: translateY(-1px);
-}
-
-/* ===================================================
-   PROFILE DROPDOWN
-=================================================== */
 .profile-box {
   position: fixed;
   top: calc(var(--topbar-h) + 8px);
   left: calc(var(--sidebar-w) + 20px);
-  background: var(--white);
-  padding: 20px;
-  border-radius: var(--radius-md);
   width: 260px;
+  padding: 20px;
   display: none;
-  box-shadow: var(--shadow-lg);
-  border: 1px solid var(--border);
   z-index: 200;
 }
 
-/* ===================================================
-   RECEIPT DROPDOWN
-=================================================== */
-.receipt-box {
-    position: fixed;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    width: 380px;
-    max-width: calc(100vw - 40px);
-    max-height: 90vh;
-    overflow-y: auto;
-    background: #ffffff;
-    color: #000000;
-    padding: 30px 25px;
-    border-radius: 12px;
-    box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
-    border: 1px solid #b4b4b4;
-    z-index: 3000;
-    font-family: "Courier New", Courier, monospace;
-    line-height: 1.6;
-}
+/*
+=====================================================
+  Main Content Area
+=====================================================
+*/
 
-.receipt-box::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(238, 243, 255, 0.45);
-    z-index: -1;
-}
-
-.receipt-box h3 {
-    margin: 0 0 20px 0;
-    padding-bottom: 15px;
-    border-bottom: 2px dashed #000000;
-    text-align: center;
-    font-size: 20px;
-    font-weight: 700;
-    letter-spacing: 1px;
-    color: #111827;
-}
-
-.receipt-box h4 {
-    margin: 22px 0 10px 0;
-    padding-bottom: 6px;
-    border-bottom: 1px dashed #000000;
-    font-size: 14px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: #374151;
-}
-
-.receipt-box p {
-    margin: 6px 0;
-    font-size: 14px;
-    word-break: break-word;
-}
-
-.receipt-box p:last-child {
-    margin-bottom: 0;
-}
-
-.receipt-box .logout-btn {
-    display: block;
-    width: 100%;
-    margin: 0 0 20px 0;
-    padding: 10px 14px;
-    border: none;
-    border-radius: 8px;
-    background: #ef4444;
-    color: #ffffff;
-    font-size: 14px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-}
-
-.receipt-box .logout-btn:hover {
-    background: #dc2626;
-    transform: scale(1.02);
-}
-
-@media (max-width: 480px) {
-    .receipt-box {
-        width: calc(100vw - 20px);
-        padding: 20px 16px;
-        border-radius: 10px;
-    }
-
-    .receipt-box h3 {
-        font-size: 17px;
-    }
-
-    .receipt-box h4,
-    .receipt-box p {
-        font-size: 13px;
-    }
-
-    .receipt-box .logout-btn {
-        padding: 9px 12px;
-        font-size: 13px;
-    }
-}
-
-/* ===================================================
-   MAIN CONTENT
-=================================================== */
 .main {
+  min-height: 100vh;
   margin-left: var(--sidebar-w);
   padding: calc(var(--topbar-h) + 28px) 32px 40px;
-  min-height: 100vh;
 }
 
 .main-section h1 {
-  font-family: var(--font-head);
   font-size: 22px;
   font-weight: 700;
-  color: var(--navy-mid);
   margin-bottom: 6px;
 }
 
-.main-section p.page-subtitle {
-  color: var(--slate);
+.page-subtitle {
   margin-bottom: 24px;
-  font-size: 14px;
+  color: var(--slate);
 }
 
-/* ===================================================
-   SECTION BOX (universal card)
-=================================================== */
+/*
+=====================================================
+  Content Sections
+  General-purpose containers used throughout the app.
+=====================================================
+*/
+
 .section-box {
-  background: var(--white);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  box-shadow: var(--shadow-md);
   padding: 24px;
   margin-bottom: 20px;
-  transition: box-shadow .2s, transform .2s;
-}
-
-.section-box:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-2px);
 }
 
 .section-box h2,
 .section-box h3 {
-  font-family: var(--font-head);
   font-size: 15px;
   font-weight: 700;
-  color: var(--navy-mid);
   margin-bottom: 16px;
 }
 
-/* Accent variants */
-.section-inventory { border-left: 3px solid var(--blue); }
-.section-cart       { border-left: 3px solid var(--green); }
-.section-payment    { border-left: 3px solid var(--amber); }
-.section-update     { border-left: 3px solid var(--red); }
+.section-inventory { border-left: 4px solid var(--blue); }
+.section-cart { border-left: 4px solid var(--green); }
+.section-payment { border-left: 4px solid var(--amber); }
+.section-update { border-left: 4px solid var(--red); }
 
-/* ===================================================
-   DASHBOARD CARDS
-=================================================== */
+/*
+=====================================================
+  Dashboard Cards
+  Small statistic boxes shown on the dashboard.
+=====================================================
+*/
+
 .dashboard-cards {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
@@ -465,48 +708,39 @@ body {
 }
 
 .card {
-  background: var(--white);
   padding: 22px 20px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
-  text-align: left;
-  transition: box-shadow .2s, transform .2s;
 }
 
-.card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-3px);
-}
-
-.card-label {
+.card-label,
+.card h2 {
+  font-family: var(--font-body);
   font-size: 12px;
   font-weight: 600;
-  letter-spacing: .5px;
+  letter-spacing: 0.5px;
   text-transform: uppercase;
   color: var(--slate);
-  margin-bottom: 8px;
 }
 
 .card h2 {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--slate);
   margin-bottom: 6px;
 }
 
 .card p {
-  font-family: var(--font-head);
   font-size: 28px;
   font-weight: 700;
   color: var(--navy-mid);
 }
 
-.card-accent { color: var(--blue); }
+.card-accent {
+  color: var(--blue);
+}
 
-/* ===================================================
-   INVENTORY GRID
-=================================================== */
+/*
+=====================================================
+  Inventory Grid
+=====================================================
+*/
+
 .inventory-cards {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -515,66 +749,56 @@ body {
 }
 
 .inv-card {
-  background: var(--white);
   padding: 18px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-sm);
-  transition: box-shadow .2s, transform .2s;
-}
-
-.inv-card:hover {
-  box-shadow: var(--shadow-lg);
-  transform: translateY(-5px);
 }
 
 .product-image {
   width: 100%;
   aspect-ratio: 1 / 1;
+  margin-bottom: 12px;
+  overflow: hidden;
   border-radius: var(--radius-md);
   background: var(--bg);
-  overflow: hidden;
-  margin-bottom: 12px;
 }
 
 .square-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: var(--radius-md);
 }
 
 .inv-card-name {
-  font-weight: 600;
-  font-size: 14px;
-  color: var(--navy-mid);
   margin-bottom: 4px;
+  font-size: 14px;
+  font-weight: 600;
 }
 
 .inv-card-price {
-  font-family: var(--font-head);
   font-size: 16px;
   font-weight: 700;
   color: var(--blue);
 }
 
-/* ===================================================
-   ROLE / TABLE BOXES
-=================================================== */
+/*
+=====================================================
+  Role Boxes
+  These are used for Manager, Cashier, and other role-based tables.
+  The heading uses a light blue color so it stands out nicely.
+=====================================================
+*/
+
 .role-box {
-  background: var(--white);
   padding: 24px;
-  border-radius: var(--radius-lg);
-  border: 1px solid var(--border);
-  box-shadow: var(--shadow-md);
   margin-bottom: 20px;
+  border: 1px solid var(--blue-light-border);
+  border-left: 5px solid var(--blue-light);
+  background: linear-gradient(to bottom, var(--blue-light-bg), var(--white) 80px);
 }
 
 .role-box h3 {
-  font-family: var(--font-head);
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 700;
-  color: var(--blue);
+  color: var(--blue-light);
   margin-bottom: 16px;
 }
 
@@ -586,18 +810,18 @@ body {
 .role-box th,
 .role-box td {
   padding: 11px 14px;
+  text-align: left;
   border-bottom: 1px solid var(--border);
   font-size: 13px;
-  text-align: left;
 }
 
 .role-box th {
   background: var(--bg);
-  font-weight: 600;
-  color: var(--slate);
   font-size: 12px;
+  font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: .4px;
+  letter-spacing: 0.4px;
+  color: var(--slate);
 }
 
 .role-box tr:last-child td {
@@ -605,20 +829,36 @@ body {
 }
 
 .role-box tr:hover td {
-  background: #f8fafd;
+  background: #f8fbff;
 }
 
-/* ===================================================
-   FORMS — aligned inputs & buttons
-=================================================== */
+/*
+=====================================================
+  Form Layout
+  Keeps labels and inputs aligned neatly.
+=====================================================
+*/
+
+.form-row,
+.update-row,
+.cart-row,
+.payment-row,
+.form-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
 .form-row,
 .update-row,
 .cart-row,
 .payment-row {
-  display: flex;
-  gap: 14px;
-  flex-wrap: wrap;
   align-items: flex-end;
+}
+
+.form-actions {
+  margin-top: 20px;
+  align-items: center;
 }
 
 .form-group,
@@ -626,191 +866,238 @@ body {
 .cart-group,
 .payment-group {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  min-width: 160px;
   flex: 1;
+  min-width: 160px;
+  flex-direction: column;
+  gap: 6px;
 }
 
-.form-group label,
-.update-group label,
-.cart-group label,
-.payment-group label {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--slate);
-  letter-spacing: .3px;
-}
+/*
+=====================================================
+  Form Feedback Messages
+=====================================================
+*/
 
-input,
-select,
-textarea {
-  padding: 9px 12px;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 14px;
-  color: var(--navy-mid);
-  background: var(--white);
-  outline: none;
-  transition: border-color .2s, box-shadow .2s;
-  width: 100%;
-}
-
-input:focus,
-select:focus,
-textarea:focus {
-  border-color: var(--blue);
-  box-shadow: 0 0 0 3px rgba(37,99,235,.1);
-}
-
-input::placeholder {
-  color: var(--slate-light);
-}
-
-/* ===================================================
-   BUTTONS
-=================================================== */
-button {
-  cursor: pointer;
-  border: none;
-  border-radius: var(--radius-sm);
-  font-family: var(--font-body);
-  font-size: 14px;
-  font-weight: 600;
-  padding: 9px 18px;
-  transition: background .15s, transform .15s, box-shadow .15s;
-  white-space: nowrap;
-}
-
-button:hover {
-  transform: translateY(-1px);
-}
-
-button:active {
-  transform: translateY(0);
-}
-
-/* Primary */
-.inv-control-box {
-  top: 90px;
-  position: sticky;
-}
-
-.btn-primary,
-.inv-role-box button,
-.inv-control-box button {
-  background: var(--blue);
-  color: var(--white);
-}
-
-.btn-primary:hover,
-.inv-role-box button:hover,
-.inv-control-box button:hover {
-  background: var(--blue-dark);
-  box-shadow: 0 4px 12px rgba(37,99,235,.3);
-}
-
-/* Success */
-.btn-success,
-.cart-box button,
-.payment-box button {
-  background: var(--green);
-  color: var(--white);
-}
-
-.btn-success:hover,
-.cart-box button:hover,
-.payment-box button:hover {
-  background: #059669;
-  box-shadow: 0 4px 12px rgba(16,185,129,.3);
-}
-
-/* Danger */
-.btn-danger,
-.delete-button-inv {
-  background: #fef2f2;
+.required {
   color: var(--red);
+  margin-left: 2px;
+}
+
+.form-msg {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  padding: 10px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.form-msg-error {
+  background: #fef2f2;
+  color: #b91c1c;
   border: 1px solid #fecaca;
 }
 
-.btn-danger:hover,
-.delete-button-inv:hover {
-  background: #fee2e2;
+.form-msg-success {
+  background: #ecfdf5;
+  color: #065f46;
+  border: 1px solid #6ee7b7;
 }
 
-/* Secondary / ghost */
-.btn-secondary {
-  background: var(--bg);
-  color: var(--navy-mid);
-  border: 1px solid var(--border);
+/*
+=====================================================
+  Account Creation Panel
+  Slides down when the admin opens the form.
+=====================================================
+*/
+
+.account-creation-form {
+  border-left: 4px solid var(--blue);
+  animation: slideDown 0.25s ease;
 }
 
-.btn-secondary:hover {
-  background: var(--border);
-}
-
-/* Button row alignment inside forms */
-.form-actions {
+.account-creation-form h3 {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
-  margin-top: 20px;
   align-items: center;
+  gap: 8px;
+  font-size: 16px;
+  color: var(--blue);
 }
 
-/* ===================================================
-   BADGES / PILLS
-=================================================== */
+.btn-submit-account:disabled {
+  background: var(--slate-light);
+  cursor: not-allowed;
+  box-shadow: none;
+  transform: none;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/*
+=====================================================
+  Receipt Modal
+  Uses a receipt-like font to feel like printed output.
+=====================================================
+*/
+
+.receipt-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 380px;
+  max-width: calc(100vw - 40px);
+  max-height: 90vh;
+  overflow-y: auto;
+  z-index: 3000;
+
+  padding: 30px 25px;
+  border-radius: 12px;
+  border: 1px solid #b4b4b4;
+
+  background: var(--white);
+  color: #000;
+  font-family: 'Courier New', Courier, monospace;
+  line-height: 1.6;
+
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+}
+
+.receipt-box::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background: rgba(238, 243, 255, 0.45);
+  z-index: -1;
+}
+
+.receipt-box h3,
+.receipt-box h4 {
+  font-family: 'Courier New', Courier, monospace;
+}
+
+.receipt-box h3 {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 2px dashed #000;
+  text-align: center;
+  font-size: 20px;
+}
+
+.receipt-box h4 {
+  margin: 22px 0 10px;
+  padding-bottom: 6px;
+  border-bottom: 1px dashed #000;
+  font-size: 14px;
+  text-transform: uppercase;
+}
+
+.receipt-box p {
+  margin: 6px 0;
+  font-size: 14px;
+  word-break: break-word;
+}
+
+.receipt-box .logout-btn {
+  width: 100%;
+  margin-bottom: 20px;
+  background: var(--red);
+  color: var(--white);
+  border: none;
+}
+
+.receipt-box .logout-btn:hover {
+  background: var(--red-dark);
+  transform: scale(1.02);
+}
+
+/* Sticky control panel stays visible while scrolling inventory */
+.inv-control-box {
+  position: sticky;
+  top: 90px;
+}
+
+/*
+=====================================================
+  Status Badges
+=====================================================
+*/
+
 .badge {
   display: inline-block;
   padding: 3px 10px;
-  border-radius: 99px;
+  border-radius: 999px;
   font-size: 11px;
   font-weight: 600;
-  letter-spacing: .3px;
+  letter-spacing: 0.3px;
 }
 
-.logo-box {
-    width: 100%;
-    padding: 20px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    margin-bottom: 10px;
+.badge-blue { background: #eff6ff; color: #1d4ed8; }
+.badge-green { background: #ecfdf5; color: #065f46; }
+.badge-red { background: #fef2f2; color: #b91c1c; }
+.badge-amber { background: #fffbeb; color: #92400e; }
+
+/*
+=====================================================
+  Mobile Menu Button
+  Hidden on desktop and shown on smaller screens.
+=====================================================
+*/
+
+.mobile-menu-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  background: var(--bg);
+  color: var(--navy-mid);
+  font-size: 18px;
 }
 
-.logo-box img {
-    width: 120px;
-    height: auto;
-    object-fit: contain;
-}
+/*
+=====================================================
+  Utility Classes
+  Handy helpers for quick spacing and colors.
+=====================================================
+*/
 
-/* Responsive */
-@media (max-width: 768px) {
-    .logo-box img {
-        width: 90px;
-    }
-}
+.text-muted { color: var(--slate); font-size: 13px; }
+.text-blue { color: var(--blue); }
+.text-green { color: var(--green); }
+.text-red { color: var(--red); }
 
-@media (max-width: 480px) {
-    .logo-box {
-        padding: 10px;
-    }
+.mt-4 { margin-top: 4px; }
+.mt-8 { margin-top: 8px; }
+.mt-16 { margin-top: 16px; }
+.mt-24 { margin-top: 24px; }
+.mb-16 { margin-bottom: 16px; }
 
-    .logo-box img {
-        width: 70px;
-    }
-}
+.flex { display: flex; }
+.items-center { align-items: center; }
+.gap-8 { gap: 8px; }
+.gap-12 { gap: 12px; }
 
-.badge-blue   { background: #eff6ff; color: #1d4ed8; }
-.badge-green  { background: #ecfdf5; color: #065f46; }
-.badge-red    { background: #fef2f2; color: #b91c1c; }
-.badge-amber  { background: #fffbeb; color: #92400e; }
+/*
+=====================================================
+  Responsive Layout
+  Adjusts spacing and navigation for tablets and phones.
+=====================================================
+*/
 
-/* ===================================================
-   RESPONSIVE
-=================================================== */
 @media (max-width: 1024px) {
   .inventory-cards {
     grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
@@ -818,21 +1105,23 @@ button:active {
 }
 
 @media (max-width: 768px) {
-  :root { --sidebar-w: 0px; }
+  :root {
+    --sidebar-w: 0px;
+  }
 
   .sidebar {
-    transform: translateX(-240px);
-    transition: transform .25s;
     width: 240px;
+    transform: translateX(-240px);
+    transition: transform 0.25s ease;
   }
 
   .sidebar.open {
     transform: translateX(0);
-    --sidebar-w: 240px;
   }
 
   .topbar {
     left: 0;
+    padding: 0 16px;
   }
 
   .main {
@@ -861,6 +1150,37 @@ button:active {
   .payment-group {
     min-width: 100%;
   }
+
+  .logo-box img {
+    width: 90px;
+  }
+}
+
+@media (max-width: 900px) {
+  .login-container {
+    grid-template-columns: 1fr;
+  }
+
+  .login-hero {
+    min-height: 420px;
+    padding: 24px;
+  }
+
+  .login-panel {
+    padding: 24px;
+  }
+
+  .hero-company {
+    font-size: 28px;
+  }
+
+  .hero-overlay {
+    padding: 28px;
+  }
+
+  .login-box {
+    padding: 32px 24px;
+  }
 }
 
 @media (max-width: 480px) {
@@ -868,7 +1188,9 @@ button:active {
     grid-template-columns: 1fr;
   }
 
-  .section-box {
+  .section-box,
+  .role-box,
+  .card {
     padding: 16px;
   }
 
@@ -877,36 +1199,26 @@ button:active {
     padding: 9px 10px;
     font-size: 12px;
   }
-}
 
-/* Mobile menu toggle (hidden by default on desktop) */
-.mobile-menu-btn {
-  display: none;
-  align-items: center;
-  justify-content: center;
-  width: 36px;
-  height: 36px;
-  border-radius: var(--radius-sm);
-  background: var(--bg);
-  border: 1px solid var(--border);
-  cursor: pointer;
-  font-size: 18px;
-  color: var(--navy-mid);
-}
+  .receipt-box {
+    width: calc(100vw - 20px);
+    padding: 20px 16px;
+  }
 
-/* ===================================================
-   UTILITY
-=================================================== */
-.text-muted    { color: var(--slate); font-size: 13px; }
-.text-blue     { color: var(--blue); }
-.text-green    { color: var(--green); }
-.text-red      { color: var(--red); }
-.mt-4          { margin-top: 4px; }
-.mt-8          { margin-top: 8px; }
-.mt-16         { margin-top: 16px; }
-.mt-24         { margin-top: 24px; }
-.mb-16         { margin-bottom: 16px; }
-.flex          { display: flex; }
-.items-center  { align-items: center; }
-.gap-8         { gap: 8px; }
-.gap-12        { gap: 12px; }
+  .receipt-box h3 {
+    font-size: 17px;
+  }
+
+  .receipt-box h4,
+  .receipt-box p {
+    font-size: 13px;
+  }
+
+  .logo-box {
+    padding: 10px;
+  }
+
+  .logo-box img {
+    width: 70px;
+  }
+}

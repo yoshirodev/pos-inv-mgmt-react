@@ -11,6 +11,7 @@ API.interceptors.request.use((req) => {
 });
 
 export const login = (data) => API.post("/auth/login", data);
+export const createUser = (data) => API.post("/auth/register", data); // ← new
 
 export const getDashboard = (id) => API.get(`/dashboard/${id}`);
 export const deleteUser = (id) => API.delete(`/dashboard/${id}`);
@@ -38,5 +39,3 @@ export const getWeeklySales = () => API.get("/sales/weekly");
 export const getMonthlySales = () => API.get("/sales/monthly");
 
 export default API;
-
-
