@@ -29,18 +29,34 @@ export default function Dashboard() {
         minute: "2-digit"
     });
 
-    const handleDelete = (id) => {
-        const confirm = window.confirm("Are you sure to delete this employee?");
+const handleDelete = (id) => {
+    const role = localStorage.getItem("role");
 
-        if(!confirm) return;
+    const firstConfirm = window.confirm("Are you sure you want to delete this employee?");
+    if (!firstConfirm) return;
 
-        deleteUser(id).then(() => {
-            setData({
-                ...data,
-                accounts: data.accounts.filter(a => a.accID !== id)
-            });
+    if (role === "HR") {
+        const secondConfirm = window.confirm("This action is permanent and cannot be undone. Confirm again?");
+        if (!secondConfirm) return;
+    }
+
+    deleteUser(id).then(() => {
+        const currentUserId = localStorage.getItem("user_id");
+
+        if (currentUserId === String(id)) {
+            localStorage.removeItem("token");
+            localStorage.removeItem("user_id");
+            localStorage.removeItem("role");
+            window.location.href = "/Login";
+            return;
+        }
+
+        setData({
+            ...data,
+            accounts: data.accounts.filter(a => a.accID !== id)
         });
-    };
+    });
+};
 
     return (
         <div>
