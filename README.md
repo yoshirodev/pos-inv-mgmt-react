@@ -45,6 +45,7 @@ This system helps manage products, track inventory, and record sales efficiently
 - Node.js
 - Express.js
 - REST API
+- PHP
 
 ### Database
 - MySQL
