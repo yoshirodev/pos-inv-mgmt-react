@@ -78,6 +78,31 @@ router.put("/:id", (req, res) => {
     );
 });
 
+router.put('/:id/add-stock', (req, res) => {
+    const productID = req.params.id;
+    const { quantity } = req.body;
+
+    const addQty = parseInt(quantity, 10);
+
+    if (isNaN(addQty) || addQty <= 0) {
+        return res.status(400).json({ message: 'Invalid quantity' });
+    }
+
+    const sql = `
+        UPDATE inventory
+        SET quantity = quantity + ?
+        WHERE id = ?
+    `;
+
+    db.query(sql, [addQty, productID], (err) => {
+        if (err) {
+            return res.status(500).json({ message: 'Failed to add stock' });
+        }
+
+        res.json({ message: 'Stock added successfully' });
+    });
+});
+
 router.delete("/:id", (req, res) => {
     const role = req.headers.role;
 

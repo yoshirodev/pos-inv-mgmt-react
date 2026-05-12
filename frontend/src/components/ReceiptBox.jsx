@@ -3,8 +3,12 @@ export default function ReceiptBox({ user, visible, onClose }) {
 
     return (
         <div className="receipt-box">
-            <button className="logout-btn" onClick={onClose}>
-                Close
+            <button
+                className="receipt-close-btn"
+                onClick={onClose}
+                type="button"
+            >
+                <i className="fa-solid fa-xmark"></i>
             </button>
 
             <h3>PAYMENT RECEIPT - {user.log_id}</h3>

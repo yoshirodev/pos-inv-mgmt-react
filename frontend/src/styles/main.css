@@ -820,6 +820,214 @@ button:active {
 
 /*
 =====================================================
+  Add Stock Modal
+  Popup window for incrementing inventory quantity.
+=====================================================
+*/
+
+.stock-modal-overlay {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  z-index: 5000;
+}
+.stock-modal {
+  width: 100%;
+  max-width: 460px;
+  background: var(--white);
+  border: 1px solid var(--border);
+  border-radius: 24px;
+  box-shadow: var(--shadow-lg);
+  overflow: hidden;
+  animation: stockModalFade 0.25s ease;
+}
+
+/* Header */
+.stock-modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--border);
+  background: linear-gradient(
+    135deg,
+    var(--blue-soft) 0%,
+    var(--white) 100%
+  );
+}
+
+.stock-modal-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--blue);
+}
+
+/* Close button */
+.stock-modal-close {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border-radius: 50%;
+  background: #f8fafc;
+  border: 1px solid var(--border);
+  color: var(--slate);
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.stock-modal-close:hover {
+  background: #eef2f7;
+  color: var(--navy-mid);
+}
+
+/* Body */
+.stock-modal-body {
+  padding: 24px;
+}
+
+.stock-modal-product {
+  margin-bottom: 18px;
+  padding: 12px 14px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+  border: 1px solid var(--border);
+}
+
+.stock-modal-product strong {
+  display: block;
+  font-size: 15px;
+  color: var(--navy-mid);
+  margin-bottom: 4px;
+}
+
+.stock-modal-product span {
+  font-size: 13px;
+  color: var(--slate);
+}
+
+/* Quantity input section */
+.stock-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+.stock-input-group label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  letter-spacing: 0.3px;
+}
+
+.stock-input-group input {
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+}
+
+/* Quick action buttons */
+.stock-quick-actions {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.stock-quick-actions button {
+  flex: 1;
+  background: var(--blue-soft);
+  color: var(--blue);
+  border: 1px solid var(--blue-light-border);
+  font-weight: 700;
+}
+
+.stock-quick-actions button:hover {
+  background: #dbeafe;
+}
+
+/* Footer buttons */
+.stock-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.stock-modal-footer .btn-secondary {
+  background: var(--bg);
+  color: var(--navy-mid);
+  border: 1px solid var(--border);
+}
+
+.stock-modal-footer .btn-secondary:hover {
+  background: #eef2f7;
+}
+
+.stock-modal-footer .btn-primary {
+  background: var(--green);
+  color: var(--white);
+}
+
+.stock-modal-footer .btn-primary:hover {
+  background: var(--green-dark);
+  box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+}
+
+/* Add Stock button on inventory card */
+.add-stock-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--blue);
+  color: var(--white);
+}
+
+.add-stock-btn:hover {
+  background: var(--blue-dark);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.28);
+}
+
+/* Smooth animation */
+@keyframes stockModalFade {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 480px) {
+  .stock-modal {
+    max-width: 100%;
+    border-radius: 20px;
+  }
+
+  .stock-modal-header,
+  .stock-modal-body {
+    padding: 18px;
+  }
+
+  .stock-quick-actions,
+  .stock-modal-footer {
+    flex-direction: column;
+  }
+
+  .stock-modal-footer button,
+  .stock-quick-actions button {
+    width: 100%;
+  }
+}
+
+/*
+=====================================================
   Role Boxes
   These are used for Manager, Cashier, and other role-based tables.
   The heading uses a light blue color so it stands out nicely.
@@ -1001,7 +1209,9 @@ button:active {
   overflow-y: auto;
   z-index: 3000;
 
-  padding: 30px 25px;
+  /* Extra top padding so the X button has space */
+  padding: 48px 25px 30px;
+
   border-radius: 12px;
   border: 1px solid #b4b4b4;
 
@@ -1011,14 +1221,50 @@ button:active {
   line-height: 1.6;
 
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+
+  /* Popup animation */
+  animation: receiptPopup 0.25s ease;
 }
 
+/* Background overlay (no blur) */
 .receipt-box::before {
   content: '';
   position: fixed;
   inset: 0;
   background: rgba(238, 243, 255, 0.45);
   z-index: -1;
+}
+
+/* Small X button in the top-right corner */
+.receipt-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+
+  width: 36px;
+  height: 36px;
+  padding: 0;
+
+  border: 1px solid var(--border);
+  border-radius: 50%;
+
+  background: #f8fafc;
+  color: var(--slate);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 16px;
+  cursor: pointer;
+  z-index: 10;
+}
+
+.receipt-close-btn:hover {
+  background: #eef2f7;
+  color: var(--navy-mid);
+  transform: none;
+  box-shadow: none;
 }
 
 .receipt-box h3,
@@ -1048,23 +1294,21 @@ button:active {
   word-break: break-word;
 }
 
+/* Old red Close button is no longer used */
 .receipt-box .logout-btn {
-  width: 100%;
-  margin-bottom: 20px;
-  background: var(--red);
-  color: var(--white);
-  border: none;
+  display: none;
 }
 
-.receipt-box .logout-btn:hover {
-  background: var(--red-dark);
-  transform: scale(1.02);
-}
-
-/* Sticky control panel stays visible while scrolling inventory */
-.inv-control-box {
-  position: sticky;
-  top: 90px;
+/* Popup animation keyframes */
+@keyframes receiptPopup {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
 }
 
 /*

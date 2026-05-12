@@ -2,12 +2,16 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
-import { getDashboard, getInventory, createProduct, updateProduct, deleteProduct } from "../services/api";
+import { getDashboard, getInventory, createProduct, updateProduct, deleteProduct, addStock } from "../services/api";
 
 export default function Inventory() {
     const [data, setData] = useState(null);
     const [products, setProducts] = useState([]);
     const [profileOpen, setProfileOpen] = useState(false);
+
+    const [stockModalOpen, setStockModalOpen] = useState(false);
+    const [selectedProduct, setSelectedProduct] = useState(null);
+    const [stockToAdd, setStockToAdd] = useState(1);
 
     const role = localStorage.getItem("role");
 
@@ -81,6 +85,36 @@ export default function Inventory() {
             setProducts(products.filter(p => p.id !== id));
             window.location.reload();
         });
+    };
+
+    const openStockModal = (product) => {
+        setSelectedProduct(product);
+        setStockToAdd(1);
+        setStockModalOpen(true);
+    };
+
+    const closeStockModal = () => {
+        setStockModalOpen(false);
+        setSelectedProduct(null);
+        setStockToAdd(1);
+    };
+
+    const handleAddStock = () => {
+        if (!selectedProduct) return;
+
+        if (stockToAdd <= 0) {
+            alert('Please enter a valid quantity.');
+            return;
+        }
+
+        addStock(selectedProduct.id, stockToAdd)
+            .then(() => {
+                fetchData();
+                closeStockModal();
+            })
+            .catch(() => {
+                alert('Failed to add stock.');
+            });
     };
 
     const today = new Date().toLocaleDateString("en-US", {
@@ -182,6 +216,13 @@ export default function Inventory() {
                                 <p>Cost: {row.cost}</p>
                                 <p>Type: {row.type}</p>
 
+                                <button
+                                    className="add-stock-btn"
+                                    onClick={() => openStockModal(row)}
+                                >
+                                    Add Stock
+                                </button>
+
                                 {role === "Manager" && (
                                     <button
                                         id="delete-product"
@@ -196,6 +237,83 @@ export default function Inventory() {
                     </div>
                 </section>
             </div>
+
+            {stockModalOpen && selectedProduct && (
+                <div
+                    className="stock-modal-overlay"
+                    onClick={closeStockModal}
+                >
+                    <div
+                        className="stock-modal"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="stock-modal-header">
+                            <h3>Add Stock</h3>
+                            <button
+                                className="stock-modal-close"
+                                onClick={closeStockModal}
+                            >
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+
+                        <div className="stock-modal-body">
+                            <div className="stock-modal-product">
+                                <strong>{selectedProduct.product_name}</strong>
+                                <span>
+                                    Current Stock: {selectedProduct.quantity}
+                                </span>
+                            </div>
+
+                            <div className="stock-input-group">
+                                <label>Quantity to Add</label>
+                                <input
+                                    type="number"
+                                    min="1"
+                                    value={stockToAdd}
+                                    onChange={(e) =>
+                                        setStockToAdd(Number(e.target.value))
+                                    }
+                                />
+                            </div>
+
+                            <div className="stock-quick-actions">
+                                <button
+                                    type="button"
+                                    onClick={() => setStockToAdd(stockToAdd + 1)}
+                                >
+                                    +1
+                                </button>
+
+                                <button
+                                    type="button"
+                                    onClick={() => setStockToAdd(stockToAdd + 10)}
+                                >
+                                    +10
+                                </button>
+                            </div>
+
+                            <div className="stock-modal-footer">
+                                <button
+                                    type="button"
+                                    className="btn-secondary"
+                                    onClick={closeStockModal}
+                                >
+                                    Cancel
+                                </button>
+
+                                <button
+                                    type="button"
+                                    className="btn-primary"
+                                    onClick={handleAddStock}
+                                >
+                                    Add Stock
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
