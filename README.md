@@ -4,6 +4,8 @@
 - KYLE MITCHELL BONCODIN
 - ZIER DAMERICK GASILLA
 
+---
+
 # HOW TO RUN PROGRAM FOR DEVELOPERS
 
 - To Access the Management Admin Website
@@ -15,6 +17,8 @@
 - Open XAAMP
 - start Apache and MySQL
 - Access this link - localhost/pos-inv-mgmt
+
+---
 
 # 🛒 STREAMLINE: POS & Inventory Management System (React + Node.js)
 
