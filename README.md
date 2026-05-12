@@ -1,19 +1,18 @@
-#YOSHIKI RODRIGUEZ
-#KYLE MITCHELL BONCODIN
-#ZIER DAMERICK GASILLA
+- YOSHIKI RODRIGUEZ
+- KYLE MITCHELL BONCODIN
+- ZIER DAMERICK GASILLA
 
-HOW TO RUN PROGRAM FOR DEVELOPERS
+# HOW TO RUN PROGRAM FOR DEVELOPERS
 
-To Access the Management Admin Website
-Open Terminal
-npm run dev in the root folder
-Access port 5781
+- To Access the Management Admin Website
+- Open Terminal
+- npm run dev in the root folder
+- Access port 5781
 
-To Access the public view website - 
-Open XAAMP
-start Apache and MySQL
-
-Access this link - localhost/pos-inv-mgmt
+- To Access the public view website - 
+- Open XAAMP
+- start Apache and MySQL
+- Access this link - localhost/pos-inv-mgmt
 
 # 🛒 STREAMLINE: POS & Inventory Management System (React + Node.js)
 
