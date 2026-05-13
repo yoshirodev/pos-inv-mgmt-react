@@ -827,6 +827,114 @@ button:active {
 
 /*
 =====================================================
+  Image Upload Field
+  Beautiful custom design for file input.
+=====================================================
+*/
+
+.form-group.image {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+/* Label */
+.form-group.image label {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--slate);
+  letter-spacing: 0.3px;
+}
+
+/* File input container */
+.form-group.image input[type="file"] {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1.5px dashed var(--blue-light-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    135deg,
+    var(--blue-soft) 0%,
+    var(--white) 100%
+  );
+  color: var(--slate);
+  font-size: 13px;
+  cursor: pointer;
+  transition:
+    border-color var(--transition),
+    box-shadow var(--transition),
+    background var(--transition),
+    transform var(--transition);
+}
+
+/* Hover effect */
+.form-group.image input[type="file"]:hover {
+  border-color: var(--blue);
+  background: linear-gradient(
+    135deg,
+    #dbeafe 0%,
+    var(--white) 100%
+  );
+  transform: translateY(-1px);
+}
+
+/* Focus state */
+.form-group.image input[type="file"]:focus {
+  outline: none;
+  border-color: var(--blue);
+  box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.10);
+}
+
+/* Custom upload button */
+.form-group.image input[type="file"]::file-selector-button {
+  margin-right: 12px;
+  padding: 1px 11px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--blue);
+  color: var(--white);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background var(--transition),
+    box-shadow var(--transition),
+    transform var(--transition);
+}
+
+/* Upload button hover */
+.form-group.image input[type="file"]::file-selector-button:hover {
+  background: var(--blue-dark);
+  box-shadow: 0 6px 16px rgba(37, 99, 235, 0.25);
+}
+
+/* Upload button active */
+.form-group.image input[type="file"]::file-selector-button:active {
+  transform: scale(0.98);
+}
+
+/* Optional helper text */
+.form-group.image::after {
+  font-size: 11px;
+  color: var(--slate-light);
+  margin-top: -2px;
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .form-group.image input[type="file"] {
+    padding: 10px 12px;
+    font-size: 12px;
+  }
+
+  .form-group.image input[type="file"]::file-selector-button {
+    padding: 8px 12px;
+    font-size: 12px;
+  }
+}
+/*
+=====================================================
   Add Stock Modal
   Popup window for incrementing inventory quantity.
 =====================================================

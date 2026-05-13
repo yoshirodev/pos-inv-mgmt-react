@@ -27,7 +27,7 @@ export const deleteUser = (id) => API.delete(`/dashboard/${id}`, {
 
 export const getInventory   = ()          => API.get("/inventory");
 export const addStock = (id, quantity) => API.put(`/inventory/${id}/add-stock`, { quantity });
-export const createProduct  = (data)     => API.post("/inventory/create", data);
+export const createProduct = (data) => API.post("/inventory/create", data, { headers: { "Content-Type": "multipart/form-data" }});
 export const updateProduct  = (id, data) => API.put(`/inventory/${id}`, data);
 export const deleteProduct  = (id)       => API.delete(`/inventory/${id}`, {
     headers: { role: localStorage.getItem("role") }

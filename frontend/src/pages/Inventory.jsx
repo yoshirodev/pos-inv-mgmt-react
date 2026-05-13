@@ -21,9 +21,10 @@ export default function Inventory() {
         product_name: "",
         type: "",
         cost: "",
-        quantity: ""
+        quantity: "",
+        image: null
     });
-
+    
     const [updateData, setUpdateData] = useState({
         productID: "",
         product_name: "",
@@ -46,16 +47,28 @@ export default function Inventory() {
     const handleCreate = (e) => {
         e.preventDefault();
 
-        createProduct(createData).then(() => {
-            fetchData();
+        const formData = new FormData();
+        formData.append("product_name", createData.product_name);
+        formData.append("type", createData.type);
+        formData.append("cost", createData.cost);
+        formData.append("quantity", createData.quantity);
+        formData.append("image", createData.image);
 
-            setCreateData({
-                product_name: "",
-                type: "",
-                cost: "",
-                quantity: ""
+        createProduct(formData)
+            .then(() => {
+                fetchData();
+
+                setCreateData({
+                    product_name: "",
+                    type: "",
+                    cost: "",
+                    quantity: "",
+                    image: null
+                });
+            })
+            .catch(() => {
+                alert("Failed to create product.");
             });
-        });
     };
 
 
@@ -117,19 +130,13 @@ export default function Inventory() {
             });
     };
 
-    const today = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
-    });
-
     const refreshPage = () => {
         window.location.reload();
     };
 
     return (
         <div>
-            <Sidebar today={today} />
+            <Sidebar/>
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
             <ProfileBox user={data.user} visible={profileOpen} />
 
@@ -159,6 +166,11 @@ export default function Inventory() {
                             <div className="form-group quantity">
                                 <label>Quantity</label>
                                 <input type="text" required onChange={e => setCreateData({ ...createData, quantity: e.target.value })} />
+                            </div>
+
+                            <div className="form-group image">
+                                <label>Image</label>
+                                <input type="file" accept="image/*" required onChange={e => setCreateData({ ...createData, image: e.target.files[0] })} />
                             </div>
                         </div>
 
@@ -208,7 +220,7 @@ export default function Inventory() {
                         {products.map(row => (
                             <div className="inv-card" key={row.id}>
                                 <div className="product-image">
-                                    <img src={`/images/${row.image_path}`} className="square-img" />
+                                    <img src={`http://localhost:5000/uploads/${row.image_path}`} className="square-img" alt={row.product_name}/>
                                 </div>
                                 <h3>ID: {row.id}</h3>
                                 <h3>{row.product_name}</h3>

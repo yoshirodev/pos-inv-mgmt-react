@@ -1,8 +1,37 @@
 const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
+const multer = require("multer");
+
+const path = require("path");
 
 console.log("INVENTORY ROUTES LOADED");
+
+// Configure multer storage
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, "uploads/");
+    },
+    filename: (req, file, cb) => {
+        const uniqueName =
+            Date.now() + path.extname(file.originalname);
+        cb(null, uniqueName);
+    }
+});
+
+// Accept only image files
+const fileFilter = (req, file, cb) => {
+    if (file.mimetype.startsWith("image/")) {
+        cb(null, true);
+    } else {
+        cb(new Error("Only image files are allowed"), false);
+    }
+};
+
+const upload = multer({
+    storage,
+    fileFilter
+});
 
 router.get("/", (req, res) => {
     db.query("SELECT id, product_name, quantity, type, cost, image_path FROM inventory", (err, result) => {
@@ -10,13 +39,34 @@ router.get("/", (req, res) => {
     });
 });
 
-router.post("/create", (req, res) => {
+router.post("/create", upload.single("image"), (req, res) => {
     const { product_name, cost, quantity, type } = req.body;
 
-    const sql = "INSERT INTO inventory (product_name, cost, quantity, type) VALUES (?, ?, ?, ?)";
-    db.query(sql, [product_name, cost, quantity, type], () => {
-        res.json({ message: "created" });
-    });
+    // Uploaded file name (stored in uploads folder)
+    const image_path = req.file ? req.file.filename : null;
+
+    const sql = `
+        INSERT INTO inventory
+        (product_name, cost, quantity, type, image_path)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+
+    db.query(
+        sql,
+        [product_name, cost, quantity, type, image_path],
+        (err) => {
+            if (err) {
+                console.error(err);
+                return res.status(500).json({
+                    message: "Failed to create product"
+                });
+            }
+
+            res.json({
+                message: "Product created successfully"
+            });
+        }
+    );
 });
 
 router.put("/:id", (req, res) => {
