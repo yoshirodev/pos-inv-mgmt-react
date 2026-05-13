@@ -269,8 +269,15 @@ button:active {
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
 }
 
+.delete-button-inv {
+  width: 100%;
+  margin-top: 10px;
+  background: white;
+  border: 1px solid #fecaca;
+  color: var(--red);
+}
+
 .btn-danger,
-.delete-button-inv,
 .logout-btn,
 .btn-cancel-account {
   background: #fef2f2;

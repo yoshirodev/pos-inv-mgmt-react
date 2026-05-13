@@ -6,7 +6,11 @@ const API = axios.create({
 
 API.interceptors.request.use((req) => {
     const token = localStorage.getItem("token");
+    const userID = localStorage.getItem("user_id"); 
+
     if (token) req.headers.Authorization = `Bearer ${token}`;
+    if (userID) req.headers["x-user-id"] = userID; 
+
     return req;
 });
 

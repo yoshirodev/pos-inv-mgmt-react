@@ -1,0 +1,16 @@
+#INVENTORY FIX
+no stock alert
+for products add a add image
+add a type and category for products
+Also add sorting for products
+
+#TRANSACTIONS FIX
+add a internal reference id for the transactions service, product and user
+
+#SERVICE FIX
+separate the service page
+for the service there should be a personel that will be asigned and history for that personel
+add service personel table
+
+# DESIGN FIX
+button alignments

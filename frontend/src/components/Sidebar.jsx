@@ -4,8 +4,8 @@ export default function Sidebar({ today }) {
     return (
         <div className="sidebar">
             <div className="date-box">
-                <p><strong>Today</strong></p>
-                <p>{today}</p>
+                <p><strong>Wonder Water</strong></p>
+                <p>Managemnent</p>
             </div>
 
             <Link to="/dashboard">Dashboard <i class="fa-solid fa-chart-pie"></i></Link>
