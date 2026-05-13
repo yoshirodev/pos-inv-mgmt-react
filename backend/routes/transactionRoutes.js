@@ -51,10 +51,6 @@ router.delete("/cart/:index", (req, res) => {
 });
 
 //  CHECKOUT 
-// After successful payment:
-//   - Deducts inventory for product items
-//   - Logs every cart item to transaction_log
-//   - For any service items in the cart, marks service_requests.status = 'Done'
 router.post("/checkout", (req, res) => {
     const { paymethod, amount, refnum } = req.body;
 
@@ -147,9 +143,6 @@ router.get("/services", (req, res) => {
 });
 
 //  SERVICE DONE 
-// Clicking "Done" on a Pending service:
-//   1. Adds the service to the cart (so cashier can collect payment)
-//   2. Sets status to "Payment" — waits for checkout before marking Done
 router.post("/service-done", (req, res) => {
     const { service_id } = req.body;
 
@@ -162,8 +155,6 @@ router.post("/service-done", (req, res) => {
 
             const service = result[0];
 
-            // Add service to cart — type:"service" + service_id lets checkout
-            // know to mark this service as Done after payment
             cart.push({
                 product:    service.service_ordered,
                 quantity:   1,

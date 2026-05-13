@@ -6,7 +6,7 @@ const jwt = require("jsonwebtoken");
 
 const SECRET = "secretkey";
 
-// ── POST /api/auth/login ──────────────────────────────────────
+// ── POST /api/auth/login 
 router.post("/login", (req, res) => {
     const { username, password } = req.body;
 
@@ -27,8 +27,8 @@ router.post("/login", (req, res) => {
     });
 });
 
-// ── POST /api/auth/register ───────────────────────────────────
-// Only called from the Manager dashboard — creates a new account
+// ── POST /api/auth/register 
+// Only called from the Manager dashboard creates a new account
 router.post("/register", async (req, res) => {
     const {
         lastname, firstname, middlename,
