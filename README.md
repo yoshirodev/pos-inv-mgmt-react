@@ -1,6 +1,10 @@
+# TEAM BONCODING DEVS
+
 - YOSHIKI RODRIGUEZ
 - KYLE MITCHELL BONCODIN
 - ZIER DAMERICK GASILLA
+
+---
 
 # HOW TO RUN PROGRAM FOR DEVELOPERS
 
@@ -13,6 +17,8 @@
 - Open XAAMP
 - start Apache and MySQL
 - Access this link - localhost/pos-inv-mgmt
+
+---
 
 # 🛒 STREAMLINE: POS & Inventory Management System (React + Node.js)
 
