@@ -1,6 +1,5 @@
 #INVENTORY FIX
 low stock alert
-add a type and category for products, branding, sizes
 Also add sorting for products
 add a reference on who added the product or stock
 add timestamp in stock addition and product creation
