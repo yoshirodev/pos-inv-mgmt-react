@@ -1,7 +1,10 @@
 #INVENTORY FIX
 low stock alert
-add a type and category for products
+add a type and category for products, branding, sizes
 Also add sorting for products
+add a reference on who added the product or stock
+add timestamp in stock addition and product creation
+add components table and assign a product id reference for components
 
 #SERVICE FIX
 separate the service page

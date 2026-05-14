@@ -174,7 +174,7 @@ router.post("/cart", (req, res) => {
     const { product, quantity } = req.body;
 
     db.query(
-        "SELECT id, cost, quantity FROM inventory WHERE product_name = ?",
+        "SELECT id, selling_price, quantity FROM inventory WHERE product_name = ?",
         [product],
         (err, result) => {
             if (err || result.length === 0)
@@ -188,8 +188,8 @@ router.post("/cart", (req, res) => {
             cart.push({
                 product,
                 quantity,
-                price:        data.cost,
-                subtotal:     data.cost * quantity,
+                price:        data.selling_price,
+                subtotal:     data.selling_price * quantity,
                 inventory_id: data.id,      // FK → inventory.id
             });
 

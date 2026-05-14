@@ -787,9 +787,11 @@ button:active {
 =====================================================
 */
 
+
+
 .inventory-cards {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 20px;
   margin-top: 24px;
 }
@@ -933,6 +935,178 @@ button:active {
     font-size: 12px;
   }
 }
+
+.inventory-actions {
+  width: 100%;
+  display: grid;
+  align-items: center;
+  grid-template-columns: repeat(auto-fill, minmax(100%, 1fr));
+  gap: 20px;
+  margin-top: 24px;
+}
+
+.inventory-actions button {
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-weight: 600;
+  font-size: 14px;
+
+  height: 50px;
+  border: 1px solid var(--border);
+  background: var(--blue);
+  color: white;
+
+  cursor: pointer;
+
+  transition: 0.2s ease;
+}
+
+.inventory-actions button {
+  background: var(--blue);
+  color: white;
+  border: 1px solid var(--blue);
+}
+
+.inventory-actions button:hover {
+  background: var(--blue-dark) !important;
+  color: white !important;
+  border: 1px solid var(--blue-dark);
+}
+
+@media (max-width: 768px) {
+  .inventory-actions {
+    flex-direction: column;
+    width: 96vw;
+  }
+
+  .inventory-actions button {
+    width: 100%;
+  }
+}
+
+/* ================================
+   FIXED LARGE MODAL (CREATE/UPDATE)
+================================= */
+
+.large-modal {
+  width: min(1200px, 96vw);
+  max-height: 90vh;
+
+  display: flex;
+  flex-direction: column;
+
+  background: var(--white);
+  border-radius: 24px;
+  border: 1px solid var(--border);
+  box-shadow: var(--shadow-lg);
+
+  overflow: hidden;
+
+  /* 🔥 THIS IS THE KEY FIX */
+  box-sizing: border-box;
+}
+
+/* ================================
+   HEADER (ALWAYS VISIBLE X BUTTON)
+================================= */
+
+.large-modal .stock-modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--border);
+
+  background: linear-gradient(
+    135deg,
+    var(--blue-soft) 0%,
+    var(--white) 100%
+  );
+}
+
+/* ================================
+   BODY (SCROLL ONLY HERE)
+================================= */
+
+.large-modal .stock-modal-body {
+  flex: 1;
+  overflow-y: auto;   /* ONLY BODY SCROLLS */
+  padding: 24px;
+}
+
+/* ================================
+   FORM GRID (LESS HEIGHT = MORE WIDTH)
+================================= */
+
+.modal-form-grid {
+  display: grid;
+
+  /* 🔥 prevents overflow */
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+
+  gap: 10px;
+
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* full width fields (like image + buttons) */
+.full-width {
+  grid-column: 1 / -1;
+}
+
+/* ================================
+   INPUT STYLE (OPTIONAL CLEANUP)
+================================= */
+
+.modal-form-grid .form-group {
+  min-width: 0;   /* 🔥 IMPORTANT FIX */
+}
+
+.modal-form-grid input {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.stock-modal-overlay {
+  overflow: hidden;
+}
+/* ================================
+   RESPONSIVE FIX
+================================= */
+
+@media (max-width: 992px) {
+  .large-modal {
+    width: 95vw;
+  }
+
+  .modal-form-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .large-modal {
+    width: 95vw;
+    max-height: 94vh;
+    border-radius: 18px;
+  }
+
+  .modal-form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .large-modal .stock-modal-body {
+    padding: 18px;
+  }
+}
+
 /*
 =====================================================
   Add Stock Modal
@@ -1091,6 +1265,13 @@ button:active {
 .stock-modal-footer .btn-primary:hover {
   background: var(--green-dark);
   box-shadow: 0 6px 16px rgba(16, 185, 129, 0.25);
+}
+
+.view-details-btn {
+  width: 100%;
+  margin-top: 10px;
+  background: var(--blue);
+  color: var(--white);
 }
 
 /* Add Stock button on inventory card */
@@ -1328,14 +1509,14 @@ button:active {
   padding: 48px 25px 30px;
 
   border-radius: 12px;
-  border: 1px solid #b4b4b4;
+  border: 1px solid var(--border);
 
   background: var(--white);
   color: #000;
   font-family: 'Courier New', Courier, monospace;
   line-height: 1.6;
 
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.18);
+  box-shadow: var(--shadow-lg);
 
   /* Popup animation */
   animation: receiptPopup 0.25s ease;
@@ -1488,6 +1669,7 @@ button:active {
 .items-center { align-items: center; }
 .gap-8 { gap: 8px; }
 .gap-12 { gap: 12px; }
+
 
 /*
 =====================================================

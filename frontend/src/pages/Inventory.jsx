@@ -4,38 +4,39 @@ import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
 import { getDashboard, getInventory, createProduct, updateProduct, deleteProduct, addStock } from "../services/api";
 
+const EMPTY_CREATE = {
+    product_name: "", type: "", category: "", brand: "",
+    serial_number: "", cost: "", selling_price: "", quantity: "",
+    length: "", width: "", height: "", image: null
+};
+
+const EMPTY_UPDATE = {
+    productID: "", product_name: "", type: "", category: "", brand: "",
+    serial_number: "", cost: "", selling_price: "", quantity: "",
+    length: "", width: "", height: ""
+};
+
 export default function Inventory() {
-    const [data, setData] = useState(null);
+    const [data, setData]         = useState(null);
     const [products, setProducts] = useState([]);
     const [profileOpen, setProfileOpen] = useState(false);
 
-    const [stockModalOpen, setStockModalOpen] = useState(false);
+    // Modals
+    const [stockModalOpen,   setStockModalOpen]   = useState(false);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
+    const [createModalOpen,  setCreateModalOpen]  = useState(false);
+    const [updateModalOpen,  setUpdateModalOpen]  = useState(false);
+
     const [selectedProduct, setSelectedProduct] = useState(null);
-    const [stockToAdd, setStockToAdd] = useState(1);
+    const [stockToAdd,      setStockToAdd]      = useState(1);
 
-    const role = localStorage.getItem("role");
+    const [createData, setCreateData] = useState(EMPTY_CREATE);
+    const [updateData, setUpdateData] = useState(EMPTY_UPDATE);
 
+    const role   = localStorage.getItem("role");
     const userID = localStorage.getItem("user_id");
 
-    const [createData, setCreateData] = useState({
-        product_name: "",
-        type: "",
-        cost: "",
-        quantity: "",
-        image: null
-    });
-    
-    const [updateData, setUpdateData] = useState({
-        productID: "",
-        product_name: "",
-        type: "",
-        cost: "",
-        quantity: ""
-    });
-
-    useEffect(() => {
-        fetchData();
-    }, []);
+    useEffect(() => { fetchData(); }, []);
 
     const fetchData = () => {
         getDashboard(userID).then(res => setData(res.data));
@@ -44,175 +45,105 @@ export default function Inventory() {
 
     if (!data) return null;
 
+    // ── Create ────────────────────────────────────────────────
     const handleCreate = (e) => {
         e.preventDefault();
 
         const formData = new FormData();
-        formData.append("product_name", createData.product_name);
-        formData.append("type", createData.type);
-        formData.append("cost", createData.cost);
-        formData.append("quantity", createData.quantity);
-        formData.append("image", createData.image);
+        Object.entries(createData).forEach(([key, val]) => {
+            if (val !== null && val !== "") formData.append(key, val);
+        });
 
-        createProduct(formData)
-            .then(() => {
-                fetchData();
-
-                setCreateData({
-                    product_name: "",
-                    type: "",
-                    cost: "",
-                    quantity: "",
-                    image: null
-                });
-            })
-            .catch(() => {
-                alert("Failed to create product.");
-            });
+        createProduct(formData).then(() => {
+            fetchData();
+            setCreateData(EMPTY_CREATE);
+            setCreateModalOpen(false);
+        }).catch(() => alert("Failed to create product."));
     };
 
-
+    // ── Update ────────────────────────────────────────────────
     const handleUpdate = (e) => {
         e.preventDefault();
 
         updateProduct(updateData.productID, updateData).then(() => {
             fetchData();
-
-            setUpdateData({
-                productID: "",
-                product_name: "",
-                type: "",
-                cost: "",
-                quantity: ""
-            });
-        });
+            setUpdateData(EMPTY_UPDATE);
+            setUpdateModalOpen(false);
+        }).catch(() => alert("Failed to update product."));
     };
 
-
-
+    // ── Delete ────────────────────────────────────────────────
     const handleDelete = (id) => {
-        const confirm = window.confirm ("Are you sure to delete this item in your inventory?");
-
-        if (!confirm) return;
+        if (!window.confirm("Are you sure to delete this item?")) return;
         deleteProduct(id).then(() => {
             setProducts(products.filter(p => p.id !== id));
-            window.location.reload();
         });
     };
 
-    const openStockModal = (product) => {
-        setSelectedProduct(product);
-        setStockToAdd(1);
-        setStockModalOpen(true);
-    };
-
-    const closeStockModal = () => {
-        setStockModalOpen(false);
-        setSelectedProduct(null);
-        setStockToAdd(1);
-    };
-
+    // ── Add Stock ─────────────────────────────────────────────
     const handleAddStock = () => {
-        if (!selectedProduct) return;
-
-        if (stockToAdd <= 0) {
-            alert('Please enter a valid quantity.');
+        if (!selectedProduct || stockToAdd <= 0) {
+            alert("Please enter a valid quantity.");
             return;
         }
-
-        addStock(selectedProduct.id, stockToAdd)
-            .then(() => {
-                fetchData();
-                closeStockModal();
-            })
-            .catch(() => {
-                alert('Failed to add stock.');
-            });
+        addStock(selectedProduct.id, stockToAdd).then(() => {
+            fetchData();
+            setStockModalOpen(false);
+            setSelectedProduct(null);
+            setStockToAdd(1);
+        }).catch(() => alert("Failed to add stock."));
     };
 
-    const refreshPage = () => {
-        window.location.reload();
+    // ── Open update modal pre-filled with card data ───────────
+    const openUpdateModal = (product) => {
+        setUpdateData({
+            productID:     product.id,
+            product_name:  product.product_name  || "",
+            type:          product.type          || "",
+            category:      product.category      || "",
+            brand:         product.brand         || "",
+            serial_number: product.serial_number || "",
+            cost:          product.cost          || "",
+            selling_price: product.selling_price || "",
+            quantity:      product.quantity      || "",
+            length:        product.length        || "",
+            width:         product.width         || "",
+            height:        product.height        || "",
+        });
+        setUpdateModalOpen(true);
     };
+
+    const FORM_FIELDS = [
+        ["Product Name", "product_name"],
+        ["Type",         "type"],
+        ["Category",     "category"],
+        ["Brand",        "brand"],
+        ["Serial No.",   "serial_number"],
+        ["Cost",         "cost"],
+        ["Selling Price","selling_price"],
+        ["Quantity",     "quantity"],
+        ["Length",       "length"],
+        ["Width",        "width"],
+        ["Height",       "height"],
+    ];
 
     return (
         <div>
-            <Sidebar/>
+            <Sidebar />
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
             <ProfileBox user={data.user} visible={profileOpen} />
 
             <div className="main">
                 <h1>Manager Controls <i className="fa-solid fa-sliders"></i></h1>
 
-                <div className="section-box inv-role-box">
-                    <form onSubmit={handleCreate}>
-                        <h3>Create</h3>
-
-                        <div className="form-row">
-                            <div className="form-group product">
-                                <label>Product Name</label>
-                                <input type="text" required onChange={e => setCreateData({ ...createData, product_name: e.target.value })} />
-                            </div>
-
-                            <div className="form-group type">
-                                <label>Type</label>
-                                <input type="text" required onChange={e => setCreateData({ ...createData, type: e.target.value })} />
-                            </div>
-
-                            <div className="form-group cost">
-                                <label>Cost</label>
-                                <input type="text" required onChange={e => setCreateData({ ...createData, cost: e.target.value })} />
-                            </div>
-
-                            <div className="form-group quantity">
-                                <label>Quantity</label>
-                                <input type="text" required onChange={e => setCreateData({ ...createData, quantity: e.target.value })} />
-                            </div>
-
-                            <div className="form-group image">
-                                <label>Image</label>
-                                <input type="file" accept="image/*" required onChange={e => setCreateData({ ...createData, image: e.target.files[0] })} />
-                            </div>
-                        </div>
-
-                        <button type="submit" onClick={refreshPage}>Create</button>
-                    </form>
+                {/* ── Top action button ──────────────────────── */}
+                <div className="inventory-actions">
+                    <button className="btn-primary" onClick={() => setCreateModalOpen(true)}>
+                        <i className="fa-solid fa-plus"></i> Create Product
+                    </button>
                 </div>
 
-                <div className="section-box inv-control-box">
-                    <form onSubmit={handleUpdate}>
-                        <h3>Update Product Information</h3>
-
-                        <div className="update-row">
-                            <div className="update-group pid">
-                                <label>Product ID</label>
-                                <input type="text" required onChange={e => setUpdateData({ ...updateData, productID: e.target.value })} />
-                            </div>
-
-                            <div className="update-group product">
-                                <label>Product Name</label>
-                                <input type="text" value={updateData.product_name} onChange={e => setUpdateData({ ...updateData, product_name: e.target.value })} />
-                            </div>
-
-                            <div className="update-group type">
-                                <label>Type</label>
-                                <input type="text" value={updateData.type} onChange={e => setUpdateData({ ...updateData, type: e.target.value })} />
-                            </div>
-
-                            <div className="update-group cost">
-                                <label>Cost</label>
-                                <input type="text" value={updateData.cost}  onChange={e => setUpdateData({ ...updateData, cost: e.target.value })} />
-                            </div>
-
-                            <div className="update-group quantity">
-                                <label>Quantity</label>
-                                <input type="text" value={updateData.quantity} onChange={e => setUpdateData({ ...updateData, quantity: e.target.value })} />
-                            </div>
-                        </div>
-
-                        <button type="submit" onClick={refreshPage}>Update</button>
-                    </form>
-                </div>
-
+                {/* ── Inventory Grid ─────────────────────────── */}
                 <section className="main-section">
                     <h1>Inventory <i className="fa-solid fa-boxes-stacked"></i></h1>
 
@@ -220,29 +151,39 @@ export default function Inventory() {
                         {products.map(row => (
                             <div className="inv-card" key={row.id}>
                                 <div className="product-image">
-                                    <img src={`http://localhost:5000/uploads/${row.image_path}`} className="square-img" alt={row.product_name}/>
+                                    <img
+                                        src={`http://localhost:5000/uploads/${row.image_path}`}
+                                        className="square-img"
+                                        alt={row.product_name}
+                                    />
                                 </div>
+
                                 <h3>ID: {row.id}</h3>
                                 <h3>{row.product_name}</h3>
                                 <p>Stock: {row.quantity}</p>
-                                <p>Cost: {row.cost}</p>
+                                <p>Selling Price: ₱{row.selling_price}</p>
                                 <p>Type: {row.type}</p>
+                                <p>Category: {row.category}</p>
 
-                                <button
-                                    className="add-stock-btn"
-                                    onClick={() => openStockModal(row)}
-                                >
+                                <button className="view-details-btn" onClick={() => { setSelectedProduct(row); setDetailsModalOpen(true); }}>
+                                    View Details
+                                </button>
+
+                                <button className="add-stock-btn" onClick={() => { setSelectedProduct(row); setStockToAdd(1); setStockModalOpen(true); }}>
                                     Add Stock
                                 </button>
 
+                                <button className="add-stock-btn" style={{ width: "100%", marginBottom: 8 }} onClick={() => openUpdateModal(row)}>
+                                    Update
+                                </button>
+
                                 {role === "Manager" && (
-                                    <button
-                                        id="delete-product"
-                                        className="delete-button-inv"
-                                        onClick={() => handleDelete(row.id)}
-                                    >
-                                        Delete
-                                    </button>
+                                    <>
+
+                                        <button className="delete-button-inv" onClick={() => handleDelete(row.id)}>
+                                            Delete
+                                        </button>
+                                    </>
                                 )}
                             </div>
                         ))}
@@ -250,77 +191,137 @@ export default function Inventory() {
                 </section>
             </div>
 
-            {stockModalOpen && selectedProduct && (
-                <div
-                    className="stock-modal-overlay"
-                    onClick={closeStockModal}
-                >
-                    <div
-                        className="stock-modal"
-                        onClick={(e) => e.stopPropagation()}
-                    >
+            {/* ══ CREATE MODAL ══════════════════════════════════ */}
+            {createModalOpen && (
+                <div className="stock-modal-overlay" onClick={() => setCreateModalOpen(false)}>
+                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
                         <div className="stock-modal-header">
-                            <h3>Add Stock</h3>
-                            <button
-                                className="stock-modal-close"
-                                onClick={closeStockModal}
-                            >
+                            <h3>Create Product</h3>
+                            <button className="stock-modal-close" onClick={() => setCreateModalOpen(false)}>
                                 <i className="fa-solid fa-xmark"></i>
                             </button>
                         </div>
+                        <div className="stock-modal-body">
+                            <form onSubmit={handleCreate} className="modal-form-grid">
+                                {FORM_FIELDS.map(([label, field]) => (
+                                    <div className="form-group" key={field}>
+                                        <label>{label}</label>
+                                        <input
+                                            type="text"
+                                            value={createData[field]}
+                                            onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
+                                        />
+                                    </div>
+                                ))}
+                                <div className="form-group full-width">
+                                    <label>Image</label>
+                                    <input
+                                        type="file"
+                                        accept="image/*"
+                                        required
+                                        onChange={e => setCreateData({ ...createData, image: e.target.files[0] })}
+                                    />
+                                </div>
+                                <div className="stock-modal-footer full-width">
+                                    <button type="button" className="btn-secondary" onClick={() => setCreateModalOpen(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Create Product</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
 
+            {/* ══ UPDATE MODAL (pre-filled from card) ══════════ */}
+            {updateModalOpen && (
+                <div className="stock-modal-overlay" onClick={() => setUpdateModalOpen(false)}>
+                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>Update — {updateData.product_name}</h3>
+                            <button className="stock-modal-close" onClick={() => setUpdateModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="stock-modal-body">
+                            <form onSubmit={handleUpdate} className="modal-form-grid">
+                                {FORM_FIELDS.map(([label, field]) => (
+                                    <div className="form-group" key={field}>
+                                        <label>{label}</label>
+                                        <input
+                                            type="text"
+                                            value={updateData[field]}
+                                            onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
+                                        />
+                                    </div>
+                                ))}
+                                <div className="stock-modal-footer full-width">
+                                    <button type="button" className="btn-secondary" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══ DETAILS MODAL ════════════════════════════════ */}
+            {detailsModalOpen && selectedProduct && (
+                <div className="stock-modal-overlay" onClick={() => setDetailsModalOpen(false)}>
+                    <div className="stock-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>Product Details</h3>
+                            <button className="stock-modal-close" onClick={() => setDetailsModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="stock-modal-body details-grid">
+                            <p><strong>Name:</strong> {selectedProduct.product_name}</p>
+                            <p><strong>Brand:</strong> {selectedProduct.brand}</p>
+                            <p><strong>Serial No.:</strong> {selectedProduct.serial_number}</p>
+                            <p><strong>Cost:</strong> ₱{selectedProduct.cost}</p>
+                            <p><strong>Category:</strong> {selectedProduct.category}</p>
+                            <p><strong>Type:</strong> {selectedProduct.type}</p>
+                            <p><strong>Length:</strong> {selectedProduct.length}</p>
+                            <p><strong>Width:</strong> {selectedProduct.width}</p>
+                            <p><strong>Height:</strong> {selectedProduct.height}</p>
+                            <p><strong>Created At:</strong> {selectedProduct.created_at}</p>
+                            <p><strong>Updated At:</strong> {selectedProduct.updated_at}</p>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══ ADD STOCK MODAL ══════════════════════════════ */}
+            {stockModalOpen && selectedProduct && (
+                <div className="stock-modal-overlay" onClick={() => { setStockModalOpen(false); setSelectedProduct(null); }}>
+                    <div className="stock-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>Add Stock</h3>
+                            <button className="stock-modal-close" onClick={() => { setStockModalOpen(false); setSelectedProduct(null); }}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
                         <div className="stock-modal-body">
                             <div className="stock-modal-product">
                                 <strong>{selectedProduct.product_name}</strong>
-                                <span>
-                                    Current Stock: {selectedProduct.quantity}
-                                </span>
+                                <span>Current Stock: {selectedProduct.quantity}</span>
                             </div>
-
                             <div className="stock-input-group">
                                 <label>Quantity to Add</label>
                                 <input
                                     type="number"
                                     min="1"
                                     value={stockToAdd}
-                                    onChange={(e) =>
-                                        setStockToAdd(Number(e.target.value))
-                                    }
+                                    onChange={e => setStockToAdd(Number(e.target.value))}
                                 />
                             </div>
-
                             <div className="stock-quick-actions">
-                                <button
-                                    type="button"
-                                    onClick={() => setStockToAdd(stockToAdd + 1)}
-                                >
-                                    +1
-                                </button>
-
-                                <button
-                                    type="button"
-                                    onClick={() => setStockToAdd(stockToAdd + 10)}
-                                >
-                                    +10
-                                </button>
+                                <button type="button" onClick={() => setStockToAdd(prev => prev + 1)}>+1</button>
+                                <button type="button" onClick={() => setStockToAdd(prev => prev + 10)}>+10</button>
                             </div>
-
                             <div className="stock-modal-footer">
-                                <button
-                                    type="button"
-                                    className="btn-secondary"
-                                    onClick={closeStockModal}
-                                >
-                                    Cancel
-                                </button>
-
-                                <button
-                                    type="button"
-                                    className="btn-primary"
-                                    onClick={handleAddStock}
-                                >
-                                    Add Stock
-                                </button>
+                                <button type="button" className="btn-secondary" onClick={() => { setStockModalOpen(false); setSelectedProduct(null); }}>Cancel</button>
+                                <button type="button" className="btn-primary" onClick={handleAddStock}>Add Stock</button>
                             </div>
                         </div>
                     </div>
