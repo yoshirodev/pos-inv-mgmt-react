@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
@@ -16,10 +16,28 @@ const EMPTY_UPDATE = {
     length: "", width: "", height: ""
 };
 
+//  Sort options 
+const SORT_OPTIONS = [
+    { label: "ID",value: "id",type: "number" },
+    { label: "Name (A → Z)",       value: "product_name",  type: "string" },
+    { label: "Category (A → Z)",   value: "category",      type: "string" },
+    { label: "Type (A → Z)",       value: "type",          type: "string" },
+    { label: "Brand (A → Z)",      value: "brand",         type: "string" },
+    { label: "Cost (Low → High)",  value: "cost",          type: "number" },
+    { label: "Cost (High → Low)",  value: "cost_desc",     type: "number", desc: true },
+    { label: "Price (Low → High)", value: "selling_price", type: "number" },
+    { label: "Price (High → Low)", value: "selling_price_desc", type: "number", desc: true },
+    { label: "Stock (Low → High)", value: "quantity",      type: "number" },
+    { label: "Stock (High → Low)", value: "quantity_desc", type: "number", desc: true },
+];
+
 export default function Inventory() {
     const [data, setData]         = useState(null);
     const [products, setProducts] = useState([]);
     const [profileOpen, setProfileOpen] = useState(false);
+
+    // Sort
+    const [sortValue, setSortValue] = useState("id");
 
     // Modals
     const [stockModalOpen,   setStockModalOpen]   = useState(false);
@@ -43,17 +61,39 @@ export default function Inventory() {
         getInventory().then(res => setProducts(res.data));
     };
 
+    useEffect(() => { fetchData(); }, []);
+
+    //  Move this ABOVE the early return 
+    const sortedProducts = useMemo(() => {
+        const option = SORT_OPTIONS.find(o => o.value === sortValue);
+        if (!option) return products;
+
+        const field = option.value.replace("_desc", "");
+        const desc  = !!option.desc;
+
+        return [...products].sort((a, b) => {
+            const aVal = a[field];
+            const bVal = b[field];
+
+            if (option.type === "number") {
+                const diff = (Number(aVal) || 0) - (Number(bVal) || 0);
+                return desc ? -diff : diff;
+            } else {
+                const diff = String(aVal || "").localeCompare(String(bVal || ""));
+                return desc ? -diff : diff;
+            }
+        });
+    }, [products, sortValue]);
+
     if (!data) return null;
 
-    // ── Create ────────────────────────────────────────────────
+    //  Create 
     const handleCreate = (e) => {
         e.preventDefault();
-
         const formData = new FormData();
         Object.entries(createData).forEach(([key, val]) => {
             if (val !== null && val !== "") formData.append(key, val);
         });
-
         createProduct(formData).then(() => {
             fetchData();
             setCreateData(EMPTY_CREATE);
@@ -61,10 +101,9 @@ export default function Inventory() {
         }).catch(() => alert("Failed to create product."));
     };
 
-    // ── Update ────────────────────────────────────────────────
+    //  Update 
     const handleUpdate = (e) => {
         e.preventDefault();
-
         updateProduct(updateData.productID, updateData).then(() => {
             fetchData();
             setUpdateData(EMPTY_UPDATE);
@@ -72,15 +111,13 @@ export default function Inventory() {
         }).catch(() => alert("Failed to update product."));
     };
 
-    // ── Delete ────────────────────────────────────────────────
+    //  Delete 
     const handleDelete = (id) => {
         if (!window.confirm("Are you sure to delete this item?")) return;
-        deleteProduct(id).then(() => {
-            setProducts(products.filter(p => p.id !== id));
-        });
+        deleteProduct(id).then(() => setProducts(products.filter(p => p.id !== id)));
     };
 
-    // ── Add Stock ─────────────────────────────────────────────
+    //  Add Stock 
     const handleAddStock = () => {
         if (!selectedProduct || stockToAdd <= 0) {
             alert("Please enter a valid quantity.");
@@ -94,7 +131,7 @@ export default function Inventory() {
         }).catch(() => alert("Failed to add stock."));
     };
 
-    // ── Open update modal pre-filled with card data ───────────
+    //  update modal pre-filled 
     const openUpdateModal = (product) => {
         setUpdateData({
             productID:     product.id,
@@ -136,19 +173,42 @@ export default function Inventory() {
             <div className="main">
                 <h1>Manager Controls <i className="fa-solid fa-sliders"></i></h1>
 
-                {/* ── Top action button ──────────────────────── */}
+                {/* ── Action bar: Create button + Sort dropdown ─ */}
                 <div className="inventory-actions">
                     <button className="btn-primary" onClick={() => setCreateModalOpen(true)}>
                         <i className="fa-solid fa-plus"></i> Create Product
                     </button>
+
+                    {/* Sort dropdown */}
+                    <div className="sort-group">
+                        <label className="sort-label">
+                            <i className="fa-solid fa-arrow-up-wide-short"></i> Sort by
+                        </label>
+                        <select
+                            className="sort-select"
+                            value={sortValue}
+                            onChange={e => setSortValue(e.target.value)}
+                        >
+                            {SORT_OPTIONS.map(opt => (
+                                <option key={opt.value} value={opt.value}>
+                                    {opt.label}
+                                </option>
+                            ))}
+                        </select>
+                    </div>
                 </div>
 
                 {/* ── Inventory Grid ─────────────────────────── */}
                 <section className="main-section">
-                    <h1>Inventory <i className="fa-solid fa-boxes-stacked"></i></h1>
+                    <h1>
+                        Inventory <i className="fa-solid fa-boxes-stacked"></i>
+                        <span style={{ fontSize: 14, fontWeight: 400, color: "#64748b", marginLeft: 10 }}>
+                            {sortedProducts.length} items
+                        </span>
+                    </h1>
 
                     <div className="inventory-cards">
-                        {products.map(row => (
+                        {sortedProducts.map(row => (
                             <div className="inv-card" key={row.id}>
                                 <div className="product-image">
                                     <img
@@ -178,12 +238,9 @@ export default function Inventory() {
                                 </button>
 
                                 {role === "Manager" && (
-                                    <>
-
-                                        <button className="delete-button-inv" onClick={() => handleDelete(row.id)}>
-                                            Delete
-                                        </button>
-                                    </>
+                                    <button className="delete-button-inv" onClick={() => handleDelete(row.id)}>
+                                        Delete
+                                    </button>
                                 )}
                             </div>
                         ))}
@@ -193,7 +250,7 @@ export default function Inventory() {
 
             {/* ══ CREATE MODAL ══════════════════════════════════ */}
             {createModalOpen && (
-                <div className="stock-modal-overlay" onClick={() => setCreateModalOpen(false)}>
+                <div className="stock-modal-overlay">
                     <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
                         <div className="stock-modal-header">
                             <h3>Create Product</h3>
@@ -232,9 +289,9 @@ export default function Inventory() {
                 </div>
             )}
 
-            {/* ══ UPDATE MODAL (pre-filled from card) ══════════ */}
+            {/* ══ UPDATE MODAL ══════════════════════════════════ */}
             {updateModalOpen && (
-                <div className="stock-modal-overlay" onClick={() => setUpdateModalOpen(false)}>
+                <div className="stock-modal-overlay">
                     <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
                         <div className="stock-modal-header">
                             <h3>Update — {updateData.product_name}</h3>

@@ -1,13 +1,21 @@
 #INVENTORY FIX
-low stock alert
-Also add sorting for products
-add a reference on who added the product or stock
-add components table and assign a product id reference for components
+    low stock alert
+    add a reference on who added the product or stock
+    add components table and assign a product id reference for components
 
 #SERVICE FIX
-separate the service page
-for the service there should be a personel that will be asigned and history for that personel
-add service personel table
+    separate the service page
+    for the service there should be a personel that will be asigned and history for that personel
+    add service personel table
 
-# DESIGN FIX
-button alignments
+NEW ADDEDD CLOUMNS IN INVENTORY TABLE
+
+    cost
+    category
+    brand
+    created_at
+    serial_number
+    updated_at
+    length
+    width
+    height
