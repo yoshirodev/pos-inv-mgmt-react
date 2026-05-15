@@ -7,15 +7,3 @@
     separate the service page
     for the service there should be a personel that will be asigned and history for that personel
     add service personel table
-
-NEW ADDEDD CLOUMNS IN INVENTORY TABLE
-
-    cost
-    category
-    brand
-    created_at
-    serial_number
-    updated_at
-    length
-    width
-    height

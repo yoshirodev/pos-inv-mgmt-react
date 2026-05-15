@@ -1,0 +1,11 @@
+NEW ADDEDD CLOUMNS IN INVENTORY TABLE
+
+    cost
+    category
+    brand
+    created_at
+    serial_number
+    updated_at
+    length
+    width
+    height
