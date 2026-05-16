@@ -176,6 +176,7 @@ export default function Inventory() {
 
             <div className="main">
                 <h1>Manager Controls <i className="fa-solid fa-sliders"></i></h1>
+                <h2>Inventory</h2>
 
                 {/* ── Action bar: Create button + Sort dropdown ─ */}
                 <div className="inventory-actions">

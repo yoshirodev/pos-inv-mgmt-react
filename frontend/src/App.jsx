@@ -4,6 +4,7 @@ import Dashboard from "./pages/Dashboard";
 import Inventory from "./pages/Inventory";
 import Transactions from "./pages/Transactions";
 import Sales from "./pages/Sales";
+import Services from "./pages/Services";
 import ProtectedRoute from "./components/ProtectedRoute";
 
 function App() {
@@ -16,6 +17,7 @@ function App() {
                     <Route path="/dashboard" element={<Dashboard />} />
                     <Route path="/inventory" element={<Inventory />} />
                     <Route path="/transactions" element={<Transactions />} />
+                    <Route path="/services" element={<Services />} />
                     <Route path="/sales" element={<Sales />} />
                 </Route>
             </Routes>

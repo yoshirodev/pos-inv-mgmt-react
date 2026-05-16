@@ -13,3 +13,16 @@ NEW ADDEDD CLOUMNS IN INVENTORY TABLE
 ZIER - 
 added new attribute (inventory table): description
 added description function update and read 
+
+NEW ADDED TABLE AND CLOUMNS
+
+TABLE NAME - service_personel
+
+Columns - 
+    perso_id PK
+    first_name
+    last_name
+    email
+    phone_no
+
+added perso_id column to Table - service_request as a foreign key

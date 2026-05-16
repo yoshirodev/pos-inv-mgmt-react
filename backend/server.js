@@ -21,6 +21,9 @@ app.use("/api/dashboard", dashboardRoutes);
 const inventoryRoutes = require("./routes/inventoryRoutes");
 app.use("/api/inventory", inventoryRoutes);
 
+const servicesRoutes = require("./routes/servicesRoutes");
+app.use("/api/services", servicesRoutes);
+
 const transactionRoutes = require("./routes/transactionRoutes");
 app.use("/api/transactions", transactionRoutes);
 

@@ -11,7 +11,8 @@ export default function Sidebar({ today }) {
             <Link to="/dashboard">Dashboard <i class="fa-solid fa-chart-pie"></i></Link>
             <Link to="/inventory">Inventory <i class="fa-solid fa-boxes-stacked"></i></Link>
             <Link to="/sales">Sales Overview <i class="fa-solid fa-chart-line"></i></Link>
-            <Link to="/transactions">Transactions <i class="fa-solid fa-exchange-alt"></i></Link>
+            <Link to="/services">Services and Payment<i class="fa-solid fa-concierge-bell"></i></Link>
+            <Link to="/transactions">Product Payments <i class="fa-solid fa-exchange-alt"></i></Link>
         </div>
     );
 }

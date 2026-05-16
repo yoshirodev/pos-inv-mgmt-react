@@ -4,6 +4,10 @@
     add components table and assign a product id reference for components
 
 #SERVICE FIX
-    separate the service page
     for the service there should be a personel that will be asigned and history for that personel
-    add service personel table
+
+#TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
+    cash payments should have their own reference id generated internaly
+
+#Design 
+    Button alignments
