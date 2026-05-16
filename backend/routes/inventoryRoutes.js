@@ -29,7 +29,7 @@ router.get("/", (req, res) => {
 router.post("/create", upload.single("image"), (req, res) => {
     const {
         product_name, type, category, brand, serial_number,
-        cost, selling_price, quantity, length, width, height
+        cost, selling_price, quantity, length, width, height, description
     } = req.body;
 
     const image_path = req.file ? req.file.filename : null;
@@ -37,13 +37,13 @@ router.post("/create", upload.single("image"), (req, res) => {
     const sql = `
         INSERT INTO inventory (
             product_name, type, category, brand, serial_number,
-            cost, selling_price, quantity, length, width, height, image_path
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            cost, selling_price, quantity, length, width, height, image_path, description
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(sql, [
         product_name, type, category, brand, serial_number,
-        cost, selling_price, quantity, length, width, height, image_path
+        cost, selling_price, quantity, length, width, height, image_path, description
     ], (err) => {
         if (err) {
             console.error(err);
@@ -59,8 +59,11 @@ router.put("/:id", (req, res) => {
     const productID = req.params.id;
     const {
         product_name, type, category, brand, serial_number,
-        cost, selling_price, quantity, length, width, height
+        cost, selling_price, quantity, length, width, height, description
     } = req.body;
+
+
+    console.log("DESCRIPTION:", description);
 
     db.query("SELECT * FROM inventory WHERE id = ?", [productID], (err, result) => {
         if (err)               return res.status(500).json({ message: "Database error" });
@@ -86,7 +89,8 @@ router.put("/:id", (req, res) => {
                 quantity      = ?,
                 length        = ?,
                 width         = ?,
-                height        = ?
+                height        = ?,
+                description   = ?
             WHERE id = ?
         `;
 
@@ -102,6 +106,7 @@ router.put("/:id", (req, res) => {
             val(length,        c.length),
             val(width,         c.width),
             val(height,        c.height),
+             description || c.description,
             productID
         ], (err) => {
             if (err) return res.status(500).json({ message: "Update failed" });

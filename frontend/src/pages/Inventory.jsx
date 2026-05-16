@@ -7,13 +7,13 @@ import { getDashboard, getInventory, createProduct, updateProduct, deleteProduct
 const EMPTY_CREATE = {
     product_name: "", type: "", category: "", brand: "",
     serial_number: "", cost: "", selling_price: "", quantity: "",
-    length: "", width: "", height: "", image: null
+    length: "", width: "", height: "", image: null,  description: ""
 };
 
 const EMPTY_UPDATE = {
     productID: "", product_name: "", type: "", category: "", brand: "",
     serial_number: "", cost: "", selling_price: "", quantity: "",
-    length: "", width: "", height: ""
+    length: "", width: "", height: "",  description: ""
 };
 
 //  Sort options 
@@ -108,6 +108,8 @@ export default function Inventory() {
             fetchData();
             setUpdateData(EMPTY_UPDATE);
             setUpdateModalOpen(false);
+
+        setSelectedProduct(prev => prev ? { ...prev, ...updateData } : prev);
         }).catch(() => alert("Failed to update product."));
     };
 
@@ -146,6 +148,7 @@ export default function Inventory() {
             length:        product.length        || "",
             width:         product.width         || "",
             height:        product.height        || "",
+            description:   product.description   || "", 
         });
         setUpdateModalOpen(true);
     };
@@ -162,6 +165,7 @@ export default function Inventory() {
         ["Length",       "length"],
         ["Width",        "width"],
         ["Height",       "height"],
+        ["Description", "description"],
     ];
 
     return (
@@ -260,16 +264,25 @@ export default function Inventory() {
                         </div>
                         <div className="stock-modal-body">
                             <form onSubmit={handleCreate} className="modal-form-grid">
-                                {FORM_FIELDS.map(([label, field]) => (
-                                    <div className="form-group" key={field}>
-                                        <label>{label}</label>
-                                        <input
-                                            type="text"
-                                            value={createData[field]}
-                                            onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
-                                        />
-                                    </div>
-                                ))}
+                               {FORM_FIELDS.map(([label, field]) => (
+    <div className="form-group" key={field}>
+        <label>{label}</label>
+        {field === "description" ? (
+            <textarea
+                rows={3}
+                value={createData[field]}  // or updateData[field] in the update modal
+                onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
+                // onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })} // for update modal
+            />
+        ) : (
+            <input
+                type="text"
+                value={createData[field]}  // or updateData[field]
+                onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
+            />
+        )}
+    </div>
+))}
                                 <div className="form-group full-width">
                                     <label>Image</label>
                                     <input
@@ -290,36 +303,44 @@ export default function Inventory() {
             )}
 
             {/* ══ UPDATE MODAL ══════════════════════════════════ */}
-            {updateModalOpen && (
-                <div className="stock-modal-overlay">
-                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
-                        <div className="stock-modal-header">
-                            <h3>Update — {updateData.product_name}</h3>
-                            <button className="stock-modal-close" onClick={() => setUpdateModalOpen(false)}>
-                                <i className="fa-solid fa-xmark"></i>
-                            </button>
+{updateModalOpen && (
+    <div className="stock-modal-overlay">
+        <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+            <div className="stock-modal-header">
+                <h3>Update — {updateData.product_name}</h3>
+                <button className="stock-modal-close" onClick={() => setUpdateModalOpen(false)}>
+                    <i className="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div className="stock-modal-body">
+                <form onSubmit={handleUpdate} className="modal-form-grid">
+                    {FORM_FIELDS.map(([label, field]) => (
+                        <div className="form-group" key={field}>
+                            <label>{label}</label>
+                            {field === "description" ? (
+                                <textarea
+                                    rows={3}
+                                    value={updateData[field] || ""}
+                                    onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
+                                />
+                            ) : (
+                                <input
+                                    type="text"
+                                    value={updateData[field] || ""}
+                                    onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
+                                />
+                            )}
                         </div>
-                        <div className="stock-modal-body">
-                            <form onSubmit={handleUpdate} className="modal-form-grid">
-                                {FORM_FIELDS.map(([label, field]) => (
-                                    <div className="form-group" key={field}>
-                                        <label>{label}</label>
-                                        <input
-                                            type="text"
-                                            value={updateData[field]}
-                                            onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
-                                        />
-                                    </div>
-                                ))}
-                                <div className="stock-modal-footer full-width">
-                                    <button type="button" className="btn-secondary" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
-                                    <button type="submit" className="btn-primary">Save Changes</button>
-                                </div>
-                            </form>
-                        </div>
+                    ))}
+                    <div className="stock-modal-footer full-width">
+                        <button type="button" className="btn-secondary" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
+                        <button type="submit" className="btn-primary">Save Changes</button>
                     </div>
-                </div>
-            )}
+                </form>
+            </div>
+        </div>
+    </div>
+)}
 
             {/* ══ DETAILS MODAL ════════════════════════════════ */}
             {detailsModalOpen && selectedProduct && (
@@ -343,6 +364,7 @@ export default function Inventory() {
                             <p><strong>Height:</strong> {selectedProduct.height}</p>
                             <p><strong>Created At:</strong> {selectedProduct.created_at}</p>
                             <p><strong>Updated At:</strong> {selectedProduct.updated_at}</p>
+                            <p><strong>Description:</strong> {selectedProduct.description}</p>
                         </div>
                     </div>
                 </div>

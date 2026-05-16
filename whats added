@@ -9,3 +9,7 @@ NEW ADDEDD CLOUMNS IN INVENTORY TABLE
     length
     width
     height
+
+ZIER - 
+added new attribute (inventory table): description
+added description function update and read 
