@@ -274,8 +274,8 @@ export default function Services() {
                 {role === "Manager" && (
                     <>
                         {/* Create Personnel Form */}
-                        <div className="section-box cart-box">
-                            <h3>Add Service Personnel</h3>
+                        <div className="section-box cart-box role-box">
+                            <h2>Add Service Personnel</h2>
                             <form onSubmit={handleCreatePersonel}>
                                 <div className="cart-row">
                                     <div className="cart-group">

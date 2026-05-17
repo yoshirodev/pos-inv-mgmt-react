@@ -114,14 +114,6 @@ export default function Dashboard() {
 
     const role = data.user.accountType;
 
-    const today = new Date().toLocaleDateString("en-US", {
-        year: "numeric", month: "long", day: "numeric"
-    });
-
-    const time = new Date().toLocaleTimeString([], {
-        hour: "2-digit", minute: "2-digit"
-    });
-
     // ── Delete account ────────────────────────────────────────
     const handleDelete = (id) => {
         const confirm = window.confirm("Are you sure to delete this employee?");
@@ -167,7 +159,7 @@ export default function Dashboard() {
 
     return (
         <div>
-            <Sidebar today={today} />
+            <Sidebar/>
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
             <ProfileBox user={data.user} visible={profileOpen} />
 
@@ -191,13 +183,31 @@ export default function Dashboard() {
                             <h2>Overall Stock</h2>
                             <p>{data.total_stock} Items</p>
                         </div>
-                        <div className="card">
-                            <h2><strong>Today</strong></h2>
-                            <p>{today}</p>
-                        </div>
-                        <div className="card">
-                            <h2><strong>Time</strong></h2>
-                            <p>{time}</p>
+                        <div className="card notification-card">
+                            <h2>
+                                System Notifications
+                            </h2>
+
+                            {data.low_stock.length === 0 ? (
+                                <p className="notification-ok">
+                                    All products are sufficiently stocked.
+                                </p>
+                            ) : (
+                                <div className="notification-list">
+                                    {data.low_stock.slice(0, 5).map((item) => (
+                                        <div key={item.id} className="notification-item">
+                                            <strong>{item.product_name}: </strong>
+                                            <span>{item.quantity} left</span>
+                                        </div>
+                                    ))}
+
+                                    {data.low_stock.length > 5 && (
+                                        <p className="notification-more">
+                                            +{data.low_stock.length - 5} more low stock items
+                                        </p>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </section>

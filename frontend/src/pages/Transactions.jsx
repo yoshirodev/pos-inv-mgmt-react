@@ -105,8 +105,8 @@ export default function Transactions() {
                 </section>
 
                 {/* ── Cart Section ─────────────────────────── */}
-                <div className="section-box cart-box">
-                    <h3>Cart Section</h3>
+                <div className="section-box cart-box role-box">
+                    <h2>Cart Section</h2>
                     <form onSubmit={handleAdd}>
                         <div className="cart-row">
                             <div className="cart-group products">
@@ -139,7 +139,7 @@ export default function Transactions() {
 
                 {/* ── Payment (only shown when cart has items) ─ */}
                 {cart.length > 0 && (
-                    <div className="section-box payment-box">
+                    <div className="section-box payment-box role-box">
                         <h2>Payment</h2>
                         <h4>Total: ₱{total}</h4>
 

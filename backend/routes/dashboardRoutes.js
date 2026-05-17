@@ -16,6 +16,13 @@ router.get("/:id", (req, res) => {
         const stockQuery = "SELECT SUM(quantity) AS total_stock FROM inventory";
         const salesQuery = "SELECT SUM(subtotal) AS today_sales FROM transaction_log WHERE DATE(timestamp) = CURDATE()";
 
+        const lowStockQuery = `
+            SELECT id, product_name, quantity
+            FROM inventory
+            WHERE quantity < 50
+            ORDER BY quantity ASC
+        `;
+
         // 🔥 ONLY HR CAN GET ACCOUNTS
         if (user.accountType === "Manager") {
             const accountsQuery = "SELECT accID, firstname, middlename, lastname, birthdate, gender, email, phonenumber, accountType, username FROM logindata";
@@ -23,25 +30,30 @@ router.get("/:id", (req, res) => {
             db.query(accountsQuery, (err, accResult) => {
                 db.query(stockQuery, (err, stockResult) => {
                     db.query(salesQuery, (err, salesResult) => {
-                        res.json({
-                            user,
-                            total_stock: stockResult[0].total_stock,
-                            today_sales: salesResult[0].today_sales || 0,
-                            accounts: accResult
+                        db.query(lowStockQuery, (err, lowStockResult) => {
+                            res.json({
+                                user,
+                                total_stock: stockResult[0].total_stock || 0,
+                                today_sales: salesResult[0].today_sales || 0,
+                                low_stock: lowStockResult,
+                                accounts: accResult
+                            });
                         });
                     });
                 });
             });
 
         } else {
-            // ❌ NON-HR → NO ACCOUNTS
             db.query(stockQuery, (err, stockResult) => {
                 db.query(salesQuery, (err, salesResult) => {
-                    res.json({
-                        user,
-                        total_stock: stockResult[0].total_stock,
-                        today_sales: salesResult[0].today_sales || 0,
-                        accounts: [] // empty
+                    db.query(lowStockQuery, (err, lowStockResult) => {
+                        res.json({
+                            user,
+                            total_stock: stockResult[0].total_stock || 0,
+                            today_sales: salesResult[0].today_sales || 0,
+                            low_stock: lowStockResult,
+                            accounts: []
+                        });
                     });
                 });
             });
