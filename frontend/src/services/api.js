@@ -18,12 +18,7 @@ export const login       = (data) => API.post("/auth/login", data);
 export const createUser  = (data) => API.post("/auth/register", data);
 
 export const getDashboard = (id) => API.get(`/dashboard/${id}`);
-export const deleteUser = (id) => API.delete(`/dashboard/${id}`, {
-    data: {
-        role: localStorage.getItem("role"),
-        requestingUserID: localStorage.getItem("user_id")
-    }
-});
+export const deleteUser = (id) => API.delete(`/dashboard/${id}`);
 
 export const getInventory = () => API.get("/inventory");
 export const addStock = (id, quantity) => API.put(`/inventory/${id}/add-stock`, { quantity });

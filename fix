@@ -1,7 +1,3 @@
-#INVENTORY FIX
-    add a reference on who added the product or stock
-    add components table and assign a product id reference for components
 
-#TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
-    cash payments should have their own reference id generated internaly
-
+add a registration for HR role
+add a Charts in Dashboard for Manager

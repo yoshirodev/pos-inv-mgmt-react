@@ -118,13 +118,11 @@ export default function Dashboard() {
     const handleDelete = (id) => {
         const confirm = window.confirm("Are you sure to delete this employee?");
         if (!confirm) return;
-
-        deleteUser(id).then(res => {
-            if (res.data.error) {
-                alert(res.data.error);
-                return;
-            }
-            setData({ ...data, accounts: data.accounts.filter(a => a.accID !== id) });
+        deleteUser(id).then(() => {
+            setData({
+                ...data,
+                accounts: data.accounts.filter(a => a.accID !== id)
+            });
         });
     };
 

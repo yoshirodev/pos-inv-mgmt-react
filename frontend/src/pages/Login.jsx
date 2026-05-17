@@ -15,7 +15,9 @@ export default function Login() {
                 localStorage.setItem("token", res.data.token);
                 localStorage.setItem("user_id", res.data.user.accID);
 
+                // ✅ ADD THIS LINE
                 localStorage.setItem("role", res.data.user.accountType);
+                console.log("full response:", res.data);
 
                 window.location.href = "/dashboard";
             }
