@@ -78,11 +78,19 @@ async function updateSalesFromDB(dateStr, year, month, weekNum) {
 }
 
 // ── GET /services/all ──────────────────────────────────────────
+// Joins service_requests with service_personel to get personnel name
 router.get("/all", (req, res) => {
-    db.query("SELECT * FROM service_requests ORDER BY service_id DESC", (err, result) => {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json(result);
-    });
+    db.query(
+        `SELECT sr.*,
+                CONCAT(sp.first_name, ' ', sp.last_name) AS personel_name
+         FROM service_requests sr
+         LEFT JOIN service_personel sp ON sr.perso_id = sp.perso_id
+         ORDER BY sr.service_id DESC`,
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(result);
+        }
+    );
 });
 
 // ── GET /services/cart ─────────────────────────────────────────
@@ -127,6 +135,23 @@ router.post("/service-done", (req, res) => {
                     res.json(serviceCart);
                 }
             );
+        }
+    );
+});
+
+// ── PATCH /services/assign-personel ───────────────────────────
+// Auto-saves personnel assignment when dropdown changes
+router.patch("/assign-personel", (req, res) => {
+    const { service_id, perso_id } = req.body;
+
+    if (!service_id) return res.status(400).json({ error: "service_id required" });
+
+    db.query(
+        "UPDATE service_requests SET perso_id = ? WHERE service_id = ?",
+        [perso_id || null, service_id],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: "Personnel assigned" });
         }
     );
 });
@@ -221,6 +246,61 @@ router.post("/checkout", async (req, res) => {
             );
         });
     });
+});
+
+// ══════════════════════════════════════════════════════════════
+//  SERVICE PERSONNEL ROUTES
+// ══════════════════════════════════════════════════════════════
+
+// ── GET /services/personel ─────────────────────────────────────
+router.get("/personel", (req, res) => {
+    db.query(
+        "SELECT * FROM service_personel ORDER BY perso_id DESC",
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json(result);
+        }
+    );
+});
+
+// ── POST /services/personel ────────────────────────────────────
+router.post("/personel", (req, res) => {
+    const { first_name, last_name, email, phone_no } = req.body;
+
+    if (!first_name || !last_name)
+        return res.status(400).json({ error: "First name and last name are required" });
+
+    db.query(
+        "INSERT INTO service_personel (first_name, last_name, email, phone_no) VALUES (?, ?, ?, ?)",
+        [first_name, last_name, email || null, phone_no || null],
+        (err, result) => {
+            if (err) return res.status(500).json({ error: err.message });
+            res.json({ message: "Personnel created", perso_id: result.insertId });
+        }
+    );
+});
+
+// ── DELETE /services/personel/:id ─────────────────────────────
+router.delete("/personel/:id", (req, res) => {
+    const { id } = req.params;
+
+    // Nullify FK in service_requests before deleting
+    db.query(
+        "UPDATE service_requests SET perso_id = NULL WHERE perso_id = ?",
+        [id],
+        (err) => {
+            if (err) return res.status(500).json({ error: err.message });
+
+            db.query(
+                "DELETE FROM service_personel WHERE perso_id = ?",
+                [id],
+                (err) => {
+                    if (err) return res.status(500).json({ error: err.message });
+                    res.json({ message: "Personnel deleted" });
+                }
+            );
+        }
+    );
 });
 
 module.exports = router;

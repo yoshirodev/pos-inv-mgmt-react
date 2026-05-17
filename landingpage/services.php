@@ -41,8 +41,8 @@
 
         $stmt = $conn->prepare(
             "INSERT INTO service_requests
-            (name, address, phone_no, email, service_ordered, price, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?)"
+            (name, address, phone_no, email, service_ordered, price, status, perso_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, NULL)"
         );
 
         $stmt->bind_param("sssssds", $name, $address, $phone, $email, $service, $price, $status);

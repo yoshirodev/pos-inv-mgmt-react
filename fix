@@ -3,11 +3,6 @@
     add a reference on who added the product or stock
     add components table and assign a product id reference for components
 
-#SERVICE FIX
-    for the service there should be a personel that will be asigned and history for that personel
-
 #TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
     cash payments should have their own reference id generated internaly
 
-#Design 
-    Button alignments

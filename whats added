@@ -26,3 +26,8 @@ Columns -
     phone_no
 
 added perso_id column to Table - service_request as a foreign key
+
+new service personel feature for additional details on service
+
+update sql be advised
+

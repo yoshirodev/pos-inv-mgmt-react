@@ -8,16 +8,30 @@ import {
     deleteServiceCartItem,
     checkoutService,
     getServices,
-    doneService
+    doneService,
+    assignPersonel,
+    getPersonel,
+    createPersonel,
+    deletePersonel,
 } from "../services/api";
 
 export default function Services() {
     const [data, setData]               = useState(null);
     const [serviceCart, setServiceCart] = useState([]);
     const [services, setServices]       = useState([]);
+    const [personelList, setPersonelList] = useState([]);
     const [profileOpen, setProfileOpen] = useState(false);
     const [payment, setPayment]         = useState({ paymethod: "", amount: "", refnum: "" });
 
+    // ── Personnel creation form ────────────────────────────────
+    const [personelForm, setPersonelForm] = useState({
+        first_name: "", last_name: "", email: "", phone_no: ""
+    });
+
+    // ── Delete warning modal state ─────────────────────────────
+    const [deleteTarget, setDeleteTarget] = useState(null); // { perso_id, name }
+
+    const role   = localStorage.getItem("role");
     const userID = localStorage.getItem("user_id");
 
     const today = new Date().toLocaleDateString("en-US", {
@@ -28,6 +42,7 @@ export default function Services() {
         getDashboard(userID).then(res => setData(res.data));
         getServicesCart().then(res => setServiceCart(res.data));
         getServices().then(res => setServices(res.data));
+        getPersonel().then(res => setPersonelList(res.data));
     };
 
     useEffect(() => { fetchAll(); }, []);
@@ -42,8 +57,15 @@ export default function Services() {
         });
     };
 
+    // ── Auto-save personnel assignment on dropdown change ──────
+    const handleAssignPersonel = (service_id, perso_id) => {
+        assignPersonel({ service_id, perso_id: perso_id || null }).then(() => {
+            getServices().then(r => setServices(r.data));
+        });
+    };
+
     // ── Remove item from service cart ─────────────────────────
-    const handleDelete = (index) => {
+    const handleDeleteCartItem = (index) => {
         deleteServiceCartItem(index).then(res => setServiceCart(res.data));
     };
 
@@ -62,6 +84,31 @@ export default function Services() {
         });
     };
 
+    // ── Create personnel ───────────────────────────────────────
+    const handleCreatePersonel = (e) => {
+        e.preventDefault();
+        createPersonel(personelForm).then(res => {
+            if (res.data.error) {
+                alert(res.data.error);
+                return;
+            }
+            setPersonelForm({ first_name: "", last_name: "", email: "", phone_no: "" });
+            getPersonel().then(r => setPersonelList(r.data));
+        });
+    };
+
+    // ── Delete personnel (confirmed via modal) ─────────────────
+    const handleDeletePersonel = () => {
+        const confirm = window.confirm("Are you sure to delete this personel?");
+        if (!confirm) return;
+
+        deletePersonel(deleteTarget.perso_id).then(() => {
+            setDeleteTarget(null);
+            getPersonel().then(r => setPersonelList(r.data));
+            getServices().then(r => setServices(r.data));
+        });
+    };
+
     const total = serviceCart.reduce((sum, i) => sum + i.subtotal, 0);
 
     return (
@@ -72,13 +119,6 @@ export default function Services() {
 
             <div className="main">
 
-                <section className="main-section">
-                    <h1>
-                        Services
-                    </h1>
-                </section>
-
-
                 {/* ── Services Table ────────────────────────── */}
                 <div className="section-box role-box">
                     <h2>Services</h2>
@@ -88,6 +128,7 @@ export default function Services() {
                                 <th>ID</th>
                                 <th>Service</th>
                                 <th>Status</th>
+                                <th>Service Personnel</th>
                                 <th></th>
                             </tr>
                         </thead>
@@ -97,6 +138,37 @@ export default function Services() {
                                     <td>{s.service_id}</td>
                                     <td>{s.service_ordered}</td>
                                     <td>{s.status}</td>
+
+                                    {/* ── Personnel column ── */}
+                                    <td>
+                                        {s.status === "Pending" ? (
+                                            // Pending → show dropdown to assign
+                                            <select
+                                                value={s.perso_id || ""}
+                                                onChange={e =>
+                                                    handleAssignPersonel(s.service_id, e.target.value)
+                                                }
+                                            >
+                                                <option value="">-- Assign --</option>
+                                                {personelList.map(p => (
+                                                    <option key={p.perso_id} value={p.perso_id}>
+                                                        {p.first_name} {p.last_name}
+                                                    </option>
+                                                ))}
+                                            </select>
+                                        ) : (
+                                            // Payment / Done → show assigned name
+                                            <span>
+                                                {s.personel_name || (
+                                                    <span style={{ color: "#9ca3af", fontStyle: "italic" }}>
+                                                        Unassigned
+                                                    </span>
+                                                )}
+                                            </span>
+                                        )}
+                                    </td>
+
+                                    {/* ── Action column ── */}
                                     <td>
                                         {s.status === "Pending" && (
                                             <button onClick={() => handleServiceDone(s.service_id)}>
@@ -143,7 +215,7 @@ export default function Services() {
                                     <td>{item.price}</td>
                                     <td>{item.subtotal}</td>
                                     <td>
-                                        <button onClick={() => handleDelete(index)}>X</button>
+                                        <button onClick={() => handleDeleteCartItem(index)}>X</button>
                                     </td>
                                 </tr>
                             ))}
@@ -196,6 +268,98 @@ export default function Services() {
                             </div>
                         </form>
                     </div>
+                )}
+
+                {/* ── Service Personnel Section (Manager only) ── */}
+                {role === "Manager" && (
+                    <>
+                        {/* Create Personnel Form */}
+                        <div className="section-box cart-box">
+                            <h3>Add Service Personnel</h3>
+                            <form onSubmit={handleCreatePersonel}>
+                                <div className="cart-row">
+                                    <div className="cart-group">
+                                        <label>First Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={personelForm.first_name}
+                                            onChange={e => setPersonelForm({ ...personelForm, first_name: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="cart-group">
+                                        <label>Last Name</label>
+                                        <input
+                                            type="text"
+                                            required
+                                            value={personelForm.last_name}
+                                            onChange={e => setPersonelForm({ ...personelForm, last_name: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="cart-group">
+                                        <label>Email</label>
+                                        <input
+                                            type="email"
+                                            value={personelForm.email}
+                                            onChange={e => setPersonelForm({ ...personelForm, email: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <div className="cart-group">
+                                        <label>Phone No.</label>
+                                        <input
+                                            type="text"
+                                            value={personelForm.phone_no}
+                                            onChange={e => setPersonelForm({ ...personelForm, phone_no: e.target.value })}
+                                        />
+                                    </div>
+
+                                    <button type="submit">Add Personnel</button>
+                                </div>
+                            </form>
+                        </div>
+
+                        {/* Personnel Table */}
+                        <div className="section-box role-box">
+                            <h2>Service Personnel</h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>First Name</th>
+                                        <th>Last Name</th>
+                                        <th>Email</th>
+                                        <th>Phone No.</th>
+                                        <th></th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {personelList.map(p => (
+                                        <tr key={p.perso_id}>
+                                            <td>{p.perso_id}</td>
+                                            <td>{p.first_name}</td>
+                                            <td>{p.last_name}</td>
+                                            <td>{p.email || "—"}</td>
+                                            <td>{p.phone_no || "—"}</td>
+                                            <td>
+                                                <button
+                                                    className="empDelButton"
+                                                    onClick={() => handleDeletePersonel({
+                                                        perso_id: p.perso_id,
+                                                        name: `${p.first_name} ${p.last_name}`
+                                                    })}
+                                                >
+                                                    Delete
+                                                </button>
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </>
                 )}
 
             </div>
