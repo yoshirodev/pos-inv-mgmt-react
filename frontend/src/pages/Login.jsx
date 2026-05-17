@@ -31,7 +31,9 @@ export default function Login() {
 
             {/* Company logo goes here */}
             <div className="hero-logo">
-                <img src="../public/logo.png" alt="Wonder Water Logo" />
+                <button onClick={() => window.location.href = "http://localhost/pos-inv-mgmt/"} className="home-btn">
+                    <img src="../public/logo.png" alt="Wonder Water Logo" />
+                </button>
             </div>
 
             <div className="hero-company">Streamline POS</div>

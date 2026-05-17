@@ -1295,6 +1295,12 @@ button:active {
     gap: 8px;
 }
 
+.home-btn {
+  background: transparent;
+  height: 100%;
+  width: 100%;
+}
+
 .sort-label {
     font-size: 13px;
     font-weight: 600;
