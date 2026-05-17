@@ -3,10 +3,13 @@ const cors = require("cors");
 
 const app = express();
 
+const path = require("path");
+
 app.use(cors());
 app.use(express.json());
 
-// ✅ Move logger HERE — before routes
+app.use("/uploads", express.static(path.join(__dirname, "uploads")));
+
 app.use((req, res, next) => {
     console.log("REQUEST:", req.method, req.url);
     next();
@@ -17,6 +20,9 @@ app.use("/api/dashboard", dashboardRoutes);
 
 const inventoryRoutes = require("./routes/inventoryRoutes");
 app.use("/api/inventory", inventoryRoutes);
+
+const servicesRoutes = require("./routes/servicesRoutes");
+app.use("/api/services", servicesRoutes);
 
 const transactionRoutes = require("./routes/transactionRoutes");
 app.use("/api/transactions", transactionRoutes);

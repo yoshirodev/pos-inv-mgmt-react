@@ -11,24 +11,21 @@ import {
     deleteCartItem,
     checkout,
     getLogs,
-    getServices,
-    doneService
 } from "../services/api";
 
 export default function Transactions() {
-    const [data, setData] = useState(null);
-    const [products, setProducts] = useState([]);
-    const [cart, setCart] = useState([]);
-    const [logs, setLogs] = useState([]);
-    const [services, setServices] = useState([]);
+    const [data, setData]               = useState(null);
+    const [products, setProducts]       = useState([]);
+    const [cart, setCart]               = useState([]);
+    const [logs, setLogs]               = useState([]);
 
-    const [receiptOpen, setReceiptOpen] = useState(false);
+    const [receiptOpen, setReceiptOpen]       = useState(false);
     const [selectedReceipt, setSelectedReceipt] = useState({});
 
     const role = localStorage.getItem("role");
     const [profileOpen, setProfileOpen] = useState(false);
 
-    const [form, setForm] = useState({ product: "", quantity: "" });
+    const [form, setForm]       = useState({ product: "", quantity: "" });
     const [payment, setPayment] = useState({ paymethod: "", amount: "", refnum: "" });
 
     const userID = localStorage.getItem("user_id");
@@ -39,7 +36,6 @@ export default function Transactions() {
         getProducts().then(res => setProducts(res.data));
         getCart().then(res => setCart(res.data));
         getLogs().then(res => setLogs(res.data));
-        getServices().then(res => setServices(res.data));
     };
 
     useEffect(() => {
@@ -58,6 +54,10 @@ export default function Transactions() {
     const handleAdd = (e) => {
         e.preventDefault();
         addToCart(form).then(res => {
+            if (res.data.error) {
+                alert(res.data.error);
+                return;
+            }
             setCart(res.data);
             setForm({ product: "", quantity: "" });
         });
@@ -78,20 +78,8 @@ export default function Transactions() {
                 alert("Success! Change: ₱" + res.data.change);
                 setCart([]);
                 setPayment({ paymethod: "", amount: "", refnum: "" });
-                // Re-fetch logs and services to reflect updated statuses
                 getLogs().then(r => setLogs(r.data));
-                getServices().then(r => setServices(r.data));
             }
-        });
-    };
-
-
-    const handleServiceDone = (service_id) => {
-        doneService(service_id).then(res => {
-
-            setCart(res.data);
-
-            getServices().then(r => setServices(r.data));
         });
     };
 
@@ -110,9 +98,15 @@ export default function Transactions() {
 
             <div className="main">
 
+                <section className="main-section">
+                    <h1>
+                        Product Payments 
+                    </h1>
+                </section>
+
                 {/* ── Cart Section ─────────────────────────── */}
-                <div className="section-box cart-box">
-                    <h3>Cart Section</h3>
+                <div className="section-box cart-box role-box">
+                    <h2>Cart Section</h2>
                     <form onSubmit={handleAdd}>
                         <div className="cart-row">
                             <div className="cart-group products">
@@ -145,8 +139,8 @@ export default function Transactions() {
 
                 {/* ── Payment (only shown when cart has items) ─ */}
                 {cart.length > 0 && (
-                    <div className="section-box payment-box">
-                        <h3>Payment</h3>
+                    <div className="section-box payment-box role-box">
+                        <h2>Payment</h2>
                         <h4>Total: ₱{total}</h4>
 
                         <form onSubmit={handleCheckout}>
@@ -192,7 +186,7 @@ export default function Transactions() {
 
                 {/* ── Pending Cart Table ────────────────────── */}
                 <div className="section-box role-box">
-                    <h3>Pending</h3>
+                    <h2>Pending</h2>
                     <table>
                         <thead>
                             <tr>
@@ -221,54 +215,10 @@ export default function Transactions() {
                     </table>
                 </div>
 
-                {/* ── Services Table ────────────────────────── */}
-                <div className="section-box role-box">
-                    <h3>Services</h3>
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>ID</th>
-                                <th>Service</th>
-                                <th>Status</th>
-                                <th></th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {services.map(s => (
-                                <tr key={s.service_id}>
-                                    <td>{s.service_id}</td>
-                                    <td>{s.service_ordered}</td>
-                                    <td>{s.status}</td>
-                                    <td>
-                                        {/* Pending → click Done → adds to cart, status becomes "Payment" */}
-                                        {s.status === "Pending" && (
-                                            <button onClick={() => handleServiceDone(s.service_id)}>
-                                                Done
-                                            </button>
-                                        )}
-                                        {/* Payment → waiting for cashier checkout, no button needed */}
-                                        {s.status === "Payment" && (
-                                            <span style={{ color: "#f59e0b", fontWeight: 600, fontSize: 13 }}>
-                                                Awaiting Payment
-                                            </span>
-                                        )}
-                                        {/* Done = fully paid */}
-                                        {s.status === "Done" && (
-                                            <span style={{ color: "#10b981", fontWeight: 600, fontSize: 13 }}>
-                                                ✓ Paid
-                                            </span>
-                                        )}
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
-
                 {/* ── Logs (Manager only) ───────────────────── */}
                 {role === "Manager" && (
                     <div className="section-box role-box">
-                        <h3>Logs</h3>
+                        <h2>Logs</h2>
                         <table>
                             <thead>
                                 <tr>

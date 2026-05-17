@@ -1,0 +1,34 @@
+NEW ADDEDD CLOUMNS IN INVENTORY TABLE
+
+    cost
+    category
+    brand
+    created_at
+    serial_number
+    updated_at
+    length
+    width
+    height
+
+ZIER - 
+added new attribute (inventory table): description
+added description function update and read 
+
+NEW ADDED TABLE AND CLOUMNS
+
+TABLE NAME - service_personel
+
+Columns - 
+    perso_id PK
+    first_name
+    last_name
+    email
+    phone_no
+
+added perso_id column to Table - service_request as a foreign key
+
+new service personel feature for additional details on service
+
+update sql be advised
+
+low stock alert in dashboard

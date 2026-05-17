@@ -2,9 +2,6 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 
-
-// Helper: promisify db.query so we can use async/await cleanly
-
 function query(sql, params = []) {
     return new Promise((resolve, reject) => {
         db.query(sql, params, (err, result) => {
@@ -14,9 +11,7 @@ function query(sql, params = []) {
     });
 }
 
-
-// GET /sales/daily  — fetch all daily sales rows (newest first)
-
+// GET /sales/daily
 router.get("/daily", async (req, res) => {
     try {
         const result = await query(
@@ -28,9 +23,7 @@ router.get("/daily", async (req, res) => {
     }
 });
 
-
-// GET /sales/weekly — fetch all weekly sales rows (newest first)
-
+// GET /sales/weekly
 router.get("/weekly", async (req, res) => {
     try {
         const result = await query(
@@ -42,9 +35,7 @@ router.get("/weekly", async (req, res) => {
     }
 });
 
-
-// GET /sales/monthly — fetch all monthly sales rows (newest first)
-
+// GET /sales/monthly
 router.get("/monthly", async (req, res) => {
     try {
         const result = await query(
@@ -56,62 +47,81 @@ router.get("/monthly", async (req, res) => {
     }
 });
 
+
+router.get("/revenue-over-time", async (req, res) => {
+    try {
+        const result = await query(
+            `SELECT
+                DATE(timestamp) AS sale_date,
+                COALESCE(SUM(subtotal), 0) AS total_revenue
+             FROM transaction_log
+             WHERE timestamp >= DATE_SUB(CURDATE(), INTERVAL 14 DAY)
+             GROUP BY DATE(timestamp)
+             ORDER BY sale_date ASC`
+        );
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+
+router.get("/top-products", async (req, res) => {
+    try {
+        const result = await query(
+            `SELECT
+                product_name,
+                SUM(quantity)  AS total_qty,
+                SUM(subtotal)  AS total_revenue
+             FROM transaction_log
+             GROUP BY product_name
+             ORDER BY total_revenue DESC
+             LIMIT 6`
+        );
+        res.json(result);
+    } catch (err) {
+        res.status(500).json({ error: err.message });
+    }
+});
+
+// POST /sales/sync
 router.post("/sync", async (req, res) => {
     try {
-        // 1. Fetch all transaction log rows
         const logs = await query(
             "SELECT log_id, timestamp, quantity, subtotal FROM transaction_log"
         );
 
-        if (logs.length === 0) {
-            return res.json({ message: "No transactions to sync." });
-        }
+        if (logs.length === 0) return res.json({ message: "No transactions to sync." });
 
-        // 2. Group by day, week, month
-        const byDay   = {};   // key: "YYYY-MM-DD"
-        const byWeek  = {};   // key: "YYYY-WW"
-        const byMonth = {};   // key: "YYYY-MM"
+        const byDay = {}, byWeek = {}, byMonth = {};
 
         for (const log of logs) {
             const date = new Date(log.timestamp);
+            const dayKey = date.toISOString().slice(0, 10);
 
-            // ── Daily key 
-            const dayKey = date.toISOString().slice(0, 10); // "2026-03-11"
-
-            if (!byDay[dayKey]) {
-                byDay[dayKey] = { total_transactions: 0, total_items_sold: 0, total_revenue: 0 };
-            }
+            if (!byDay[dayKey]) byDay[dayKey] = { total_transactions: 0, total_items_sold: 0, total_revenue: 0 };
             byDay[dayKey].total_transactions += 1;
             byDay[dayKey].total_items_sold   += log.quantity || 0;
             byDay[dayKey].total_revenue      += parseFloat(log.subtotal) || 0;
 
-            // ── Weekly key 
-            // ISO week: Monday-based week number
-            const year      = date.getFullYear();
-            const weekNum   = getISOWeekNumber(date);
-            const weekKey   = `${year}-${String(weekNum).padStart(2, "0")}`;
+            const year = date.getFullYear();
+            const weekNum = getISOWeekNumber(date);
+            const weekKey = `${year}-${String(weekNum).padStart(2, "0")}`;
 
-            if (!byWeek[weekKey]) {
-                byWeek[weekKey] = { year, week_number: weekNum, total_transactions: 0, total_items_sold: 0, total_revenue: 0 };
-            }
+            if (!byWeek[weekKey]) byWeek[weekKey] = { year, week_number: weekNum, total_transactions: 0, total_items_sold: 0, total_revenue: 0 };
             byWeek[weekKey].total_transactions += 1;
             byWeek[weekKey].total_items_sold   += log.quantity || 0;
             byWeek[weekKey].total_revenue      += parseFloat(log.subtotal) || 0;
 
-            // ── Monthly key 
-            const month     = date.getMonth() + 1; // 1-12
-            const monthKey  = `${year}-${String(month).padStart(2, "0")}`;
+            const month = date.getMonth() + 1;
+            const monthKey = `${year}-${String(month).padStart(2, "0")}`;
 
-            if (!byMonth[monthKey]) {
-                byMonth[monthKey] = { year, month, total_transactions: 0, total_items_sold: 0, total_revenue: 0 };
-            }
+            if (!byMonth[monthKey]) byMonth[monthKey] = { year, month, total_transactions: 0, total_items_sold: 0, total_revenue: 0 };
             byMonth[monthKey].total_transactions += 1;
             byMonth[monthKey].total_items_sold   += log.quantity || 0;
             byMonth[monthKey].total_revenue      += parseFloat(log.subtotal) || 0;
         }
 
-        // 3. UPSERT daily_sales
-        //    ON DUPLICATE KEY UPDATE targets the UNIQUE KEY on sales_date
         for (const [dateStr, vals] of Object.entries(byDay)) {
             await query(
                 `INSERT INTO daily_sales (sales_date, total_transactions, total_items_sold, total_revenue)
@@ -124,8 +134,6 @@ router.post("/sync", async (req, res) => {
             );
         }
 
-        // 4. UPSERT weekly_sales
-        //    ON DUPLICATE KEY UPDATE targets the UNIQUE KEY on (year, week_number)
         for (const [, vals] of Object.entries(byWeek)) {
             await query(
                 `INSERT INTO weekly_sales (year, week_number, total_transactions, total_items_sold, total_revenue)
@@ -138,8 +146,6 @@ router.post("/sync", async (req, res) => {
             );
         }
 
-        // 5. UPSERT monthly_sales
-        //    ON DUPLICATE KEY UPDATE targets the UNIQUE KEY on (year, month)
         for (const [, vals] of Object.entries(byMonth)) {
             await query(
                 `INSERT INTO monthly_sales (year, month, total_transactions, total_items_sold, total_revenue)
@@ -167,33 +173,25 @@ router.post("/sync", async (req, res) => {
     }
 });
 
-
+// POST /sales/update-from-transaction
 router.post("/update-from-transaction", async (req, res) => {
     try {
         const { quantity, subtotal, timestamp } = req.body;
 
-        if (!quantity || !subtotal || !timestamp) {
+        if (!quantity || !subtotal || !timestamp)
             return res.status(400).json({ error: "quantity, subtotal, and timestamp are required." });
-        }
 
-        const date     = new Date(timestamp);
-        const dateStr  = date.toISOString().slice(0, 10);
-        const year     = date.getFullYear();
-        const month    = date.getMonth() + 1;
-        const weekNum  = getISOWeekNumber(date);
-        const qty      = parseInt(quantity);
-        const rev      = parseFloat(subtotal).toFixed(2);
+        const date    = new Date(timestamp);
+        const dateStr = date.toISOString().slice(0, 10);
+        const year    = date.getFullYear();
+        const month   = date.getMonth() + 1;
+        const weekNum = getISOWeekNumber(date);
 
-        // ── Daily: recount from transaction_log for that exact date ──
-        // This keeps the totals 100% accurate even if called multiple
-        // times on the same day (idempotent).
         const [dayTotals] = await query(
-            `SELECT
-                COUNT(*)          AS total_transactions,
-                COALESCE(SUM(quantity), 0) AS total_items_sold,
-                COALESCE(SUM(subtotal), 0) AS total_revenue
-             FROM transaction_log
-             WHERE DATE(timestamp) = ?`,
+            `SELECT COUNT(*) AS total_transactions,
+                    COALESCE(SUM(quantity), 0) AS total_items_sold,
+                    COALESCE(SUM(subtotal), 0) AS total_revenue
+             FROM transaction_log WHERE DATE(timestamp) = ?`,
             [dateStr]
         );
 
@@ -207,15 +205,12 @@ router.post("/update-from-transaction", async (req, res) => {
             [dateStr, dayTotals.total_transactions, dayTotals.total_items_sold, parseFloat(dayTotals.total_revenue).toFixed(2)]
         );
 
-        // ── Weekly: recount from transaction_log for that ISO week ──
         const [weekTotals] = await query(
-            `SELECT
-                COUNT(*)          AS total_transactions,
-                COALESCE(SUM(quantity), 0) AS total_items_sold,
-                COALESCE(SUM(subtotal), 0) AS total_revenue
+            `SELECT COUNT(*) AS total_transactions,
+                    COALESCE(SUM(quantity), 0) AS total_items_sold,
+                    COALESCE(SUM(subtotal), 0) AS total_revenue
              FROM transaction_log
-             WHERE YEAR(timestamp) = ?
-               AND WEEK(timestamp, 1) = ?`,
+             WHERE YEAR(timestamp) = ? AND WEEK(timestamp, 1) = ?`,
             [year, weekNum]
         );
 
@@ -229,15 +224,12 @@ router.post("/update-from-transaction", async (req, res) => {
             [year, weekNum, weekTotals.total_transactions, weekTotals.total_items_sold, parseFloat(weekTotals.total_revenue).toFixed(2)]
         );
 
-        // ── Monthly: recount from transaction_log for that month ──
         const [monthTotals] = await query(
-            `SELECT
-                COUNT(*)          AS total_transactions,
-                COALESCE(SUM(quantity), 0) AS total_items_sold,
-                COALESCE(SUM(subtotal), 0) AS total_revenue
+            `SELECT COUNT(*) AS total_transactions,
+                    COALESCE(SUM(quantity), 0) AS total_items_sold,
+                    COALESCE(SUM(subtotal), 0) AS total_revenue
              FROM transaction_log
-             WHERE YEAR(timestamp) = ?
-               AND MONTH(timestamp) = ?`,
+             WHERE YEAR(timestamp) = ? AND MONTH(timestamp) = ?`,
             [year, month]
         );
 
@@ -259,13 +251,8 @@ router.post("/update-from-transaction", async (req, res) => {
     }
 });
 
-// 
-// Helper: ISO 8601 week number (week starts Monday)
-// Returns 1–53
-// 
 function getISOWeekNumber(date) {
     const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    // Set to nearest Thursday (makes the week year calculation correct)
     d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
     const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
