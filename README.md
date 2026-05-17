@@ -20,25 +20,25 @@
 
 ---
 
-# 🛒 STREAMLINE: POS & Inventory Management System (React + Node.js)
+# STREAMLINE: POS & Inventory Management System (React + Node.js)
 
 A full-stack **Point of Sale (POS) and Inventory Management System** built using **React.js, Node.js, Express, and MySQL**.  
 This system helps manage products, track inventory, and record sales efficiently in a structured and automated way.
 
 ---
 
-## 🚀 Features
+## Features
 
-- 📦 Product Management (Add, Update, Delete Products)
-- 📊 Inventory Tracking (Real-time stock updates)
-- 💰 Sales Management (Record and monitor transactions)
-- 📈 Dashboard Overview (Sales and inventory summary)
-- 🔐 Role-based UI access
-- ⚡ Fast and responsive user interface
+- Product Management (Add, Update, Delete Products)
+- Inventory Tracking (Real-time stock updates)
+- Sales Management (Record and monitor transactions)
+- Dashboard Overview (Sales and inventory summary)
+- Role-based UI access
+- Fast and responsive user interface
 
 ---
 
-## 🧱 Tech Stack
+## Tech Stack
 
 ### Frontend
 - React.js
