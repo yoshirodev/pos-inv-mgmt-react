@@ -6,6 +6,10 @@
             product_id Fk      
             component_name      
             description
+            quantity
+            cost
+            selling_price
+            added_by
 
 #TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
     cash payments should have their own reference id generated internaly

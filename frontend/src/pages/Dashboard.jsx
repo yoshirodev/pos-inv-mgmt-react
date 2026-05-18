@@ -212,11 +212,7 @@ export default function Dashboard() {
                     </div>
                 </section>
 
-                {/* ════════════════════════════════════════════
-                    CHARTS — side by side
-                    Manager: Revenue Over Time + Top Products
-                    Employee: Top Products only (full width)
-                ════════════════════════════════════════════ */}
+
                 {(role === "Manager" || role === "Employee") && (
                     <div className="charts-row">
 

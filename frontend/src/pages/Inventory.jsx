@@ -281,7 +281,7 @@ export default function Inventory() {
 
                     {/* Show All Sub Components button */}
                     <button className="btn-secondary" onClick={openAllComponentsModal}>
-                        <i className="fa-solid fa-cubes"></i> Show All Sub Components
+                        Show All Components
                     </button>
 
                     {/* Sort dropdown */}
@@ -336,7 +336,7 @@ export default function Inventory() {
 
                                 {/* Components button */}
                                 <button className="view-details-btn" style={{ marginTop: 6 }} onClick={() => openComponentsModal(row)}>
-                                    <i className="fa-solid fa-cube"></i> Components
+                                    Components
                                 </button>
 
                                 <button className="add-stock-btn" onClick={() => { setSelectedProduct(row); setStockToAdd(1); setStockModalOpen(true); }}>
@@ -515,10 +515,9 @@ export default function Inventory() {
             {/* ══ COMPONENTS MODAL (per product) ═══════════════ */}
             {componentsModalOpen && selectedComponentProduct && (
                 <div className="stock-modal-overlay">
-                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+                    <div className="component-modal" onClick={e => e.stopPropagation()}>
                         <div className="stock-modal-header">
                             <h3>
-                                <i className="fa-solid fa-cube"></i>&nbsp;
                                 Components — {selectedComponentProduct.product_name}
                             </h3>
                             <button className="stock-modal-close" onClick={() => setComponentsModalOpen(false)}>
@@ -674,7 +673,7 @@ export default function Inventory() {
             {/* ══ SHOW ALL COMPONENTS MODAL ════════════════════ */}
             {allComponentsModalOpen && (
                 <div className="stock-modal-overlay" onClick={() => setAllComponentsModalOpen(false)}>
-                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+                    <div className="component-modal large-modal" onClick={e => e.stopPropagation()}>
                         <div className="stock-modal-header">
                             <h3>
                                 <i className="fa-solid fa-cubes"></i>&nbsp;
