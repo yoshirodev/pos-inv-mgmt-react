@@ -33,7 +33,11 @@ app.use("/api/sales", salesRoutes);
 const authRoutes = require("./routes/authRoutes");
 app.use("/api/auth", authRoutes);
 
+const componentsRoutes = require("./routes/componentsRoutes");
+app.use("/api/components", componentsRoutes);
+
 const PORT = 5000;
 app.listen(PORT, () => {
     console.log(`Server running on port ${PORT}`);
 });
+
