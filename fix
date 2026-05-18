@@ -1,16 +1,5 @@
-#INVENTORY FIX
-    add a reference on who added the product or stock
-    add components table and assign a product id reference for components
-        add a table called components and assign these columns
-            component_id PK
-            product_id Fk      
-            component_name      
-            description
-            quantity
-            cost
-            selling_price
-            added_by
 
 #TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
     cash payments should have their own reference id generated internaly
+    components of a product should automatically deduct its stock when a product is sold
 

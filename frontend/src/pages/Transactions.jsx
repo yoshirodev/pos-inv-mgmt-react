@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
-import ReceiptBox from "../components/ReceiptBox";
 import {
     getDashboard,
     getProducts,
@@ -13,24 +12,117 @@ import {
     getLogs,
 } from "../services/api";
 
+function ReceiptModal({ receipt, onClose }) {
+    if (!receipt) return null;
+
+    const today = new Date().toLocaleString("en-PH", {
+        year: "numeric", month: "long", day: "numeric",
+        hour: "2-digit", minute: "2-digit"
+    });
+
+    return (
+        <>
+            <div className="stock-modal-overlay" onClick={onClose} />
+            <div className="receipt-box" onClick={e => e.stopPropagation()}>
+                <h3>Payment Receipt</h3>
+
+                <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginBottom: 16 }}>
+                    {today}
+                </p>
+
+                <h4>Items Purchased</h4>
+                {receipt.items.map((item, i) => (
+                    <div key={i} style={{ display: "flex", justifyContent: "space-between", margin: "6px 0", fontSize: 13 }}>
+                        <span>{item.product} × {item.quantity}</span>
+                        <span>₱{parseFloat(item.subtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
+                    </div>
+                ))}
+
+                <div style={{ borderTop: "1px dashed #000", margin: "14px 0" }} />
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 14 }}>
+                    <span>TOTAL</span>
+                    <span>₱{parseFloat(receipt.total).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
+                </div>
+
+                <h4 style={{ marginTop: 16 }}>Payment Details</h4>
+                <p>Method: {receipt.payment}</p>
+                <p>Amount Paid: ₱{parseFloat(receipt.amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+                <p>Change: ₱{parseFloat(receipt.change).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+                {receipt.refnum && <p>Reference #: {receipt.refnum}</p>}
+
+                <div style={{ borderTop: "2px dashed #000", margin: "16px 0" }} />
+
+                <button
+                    className="logout-btn"
+                    style={{ width: "100%", marginTop: 16 }}
+                    onClick={onClose}
+                >
+                    Close
+                </button>
+            </div>
+        </>
+    );
+}
+
+function LogReceiptModal({ log, onClose }) {
+    if (!log) return null;
+    return (
+        <>
+            <div className="stock-modal-overlay" onClick={onClose} />
+            <div className="receipt-box" onClick={e => e.stopPropagation()}>
+                <h3>Payment Receipt</h3>
+
+                <h4>Transaction #{log.log_id}</h4>
+                <p style={{ fontSize: 13, marginBottom: 8 }}>{log.timestamp}</p>
+
+                <h4>Products</h4>
+                <p style={{ fontSize: 13, lineHeight: 1.8 }}>{log.product_name}</p>
+
+                <div style={{ borderTop: "1px dashed #000", margin: "14px 0" }} />
+
+                <div style={{ display: "flex", justifyContent: "space-between", fontWeight: 700, fontSize: 14 }}>
+                    <span>TOTAL</span>
+                    <span>₱{parseFloat(log.subtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
+                </div>
+
+                <h4 style={{ marginTop: 16 }}>Payment Details</h4>
+                <p>Method: {log.payment_method}</p>
+                <p>Amount Paid: ₱{parseFloat(log.amount_paid).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+                <p>Change: ₱{parseFloat(log.change_amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
+                {log.reference_number && <p>Reference #: {log.reference_number}</p>}
+
+                <div style={{ borderTop: "2px dashed #000", margin: "16px 0" }} />
+
+                <button className="logout-btn" style={{ width: "100%", marginTop: 16 }} onClick={onClose}>
+                    Close
+                </button>
+            </div>
+        </>
+    );
+}
+
 export default function Transactions() {
-    const [data, setData]               = useState(null);
-    const [products, setProducts]       = useState([]);
-    const [cart, setCart]               = useState([]);
-    const [logs, setLogs]               = useState([]);
+    const [data, setData]           = useState(null);
+    const [products, setProducts]   = useState([]);
+    const [cart, setCart]           = useState([]);
+    const [logs, setLogs]           = useState([]);
 
-    const [receiptOpen, setReceiptOpen]       = useState(false);
-    const [selectedReceipt, setSelectedReceipt] = useState({});
+    // Receipt state — shown right after checkout
+    const [receipt, setReceipt]         = useState(null);
+    const [receiptOpen, setReceiptOpen] = useState(false);
 
-    const role = localStorage.getItem("role");
+    // Log receipt — shown when clicking Receipt button in logs table
+    const [logReceipt, setLogReceipt]         = useState(null);
+    const [logReceiptOpen, setLogReceiptOpen] = useState(false);
+
+    const role    = localStorage.getItem("role");
+    const userID  = localStorage.getItem("user_id");
     const [profileOpen, setProfileOpen] = useState(false);
 
     const [form, setForm]       = useState({ product: "", quantity: "" });
     const [payment, setPayment] = useState({ paymethod: "", amount: "", refnum: "" });
 
-    const userID = localStorage.getItem("user_id");
-
-    // ── Fetch everything ──────────────────────────────────────
     const fetchAll = () => {
         getDashboard(userID).then(res => setData(res.data));
         getProducts().then(res => setProducts(res.data));
@@ -38,26 +130,19 @@ export default function Transactions() {
         getLogs().then(res => setLogs(res.data));
     };
 
-    useEffect(() => {
-        fetchAll();
-    }, []);
+    useEffect(() => { fetchAll(); }, []);
 
     if (!data) return null;
 
     const today = new Date().toLocaleDateString("en-US", {
-        year: "numeric",
-        month: "long",
-        day: "numeric"
+        year: "numeric", month: "long", day: "numeric"
     });
 
     // ── Add to cart ───────────────────────────────────────────
     const handleAdd = (e) => {
         e.preventDefault();
         addToCart(form).then(res => {
-            if (res.data.error) {
-                alert(res.data.error);
-                return;
-            }
+            if (res.data.error) { alert(res.data.error); return; }
             setCart(res.data);
             setForm({ product: "", quantity: "" });
         });
@@ -75,7 +160,17 @@ export default function Transactions() {
             if (res.data.error) {
                 alert(res.data.error);
             } else {
-                alert("Success! Change: ₱" + res.data.change);
+                // Build receipt from response and show it
+                setReceipt({
+                    items:   res.data.items,
+                    total:   res.data.total,
+                    payment: res.data.payment,
+                    amount:  res.data.amount,
+                    change:  res.data.change,
+                    refnum:  res.data.refnum,
+                });
+                setReceiptOpen(true);
+
                 setCart([]);
                 setPayment({ paymethod: "", amount: "", refnum: "" });
                 getLogs().then(r => setLogs(r.data));
@@ -90,18 +185,21 @@ export default function Transactions() {
             <Sidebar today={today} />
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
             <ProfileBox user={data.user} visible={profileOpen} />
-            <ReceiptBox
-                user={selectedReceipt}
-                visible={receiptOpen}
-                onClose={() => setReceiptOpen(false)}
-            />
+
+            {/* Receipt shown right after checkout */}
+            {receiptOpen && (
+                <ReceiptModal receipt={receipt} onClose={() => { setReceiptOpen(false); setReceipt(null); }} />
+            )}
+
+            {/* Receipt from logs table */}
+            {logReceiptOpen && (
+                <LogReceiptModal log={logReceipt} onClose={() => { setLogReceiptOpen(false); setLogReceipt(null); }} />
+            )}
 
             <div className="main">
 
                 <section className="main-section">
-                    <h1>
-                        Product Payments 
-                    </h1>
+                    <h1>Product Payments</h1>
                 </section>
 
                 {/* ── Cart Section ─────────────────────────── */}
@@ -121,7 +219,6 @@ export default function Transactions() {
                                     ))}
                                 </select>
                             </div>
-
                             <div className="cart-group quantity">
                                 <label>Quantity</label>
                                 <input
@@ -131,18 +228,16 @@ export default function Transactions() {
                                     onChange={e => setForm({ ...form, quantity: e.target.value })}
                                 />
                             </div>
-
                             <button type="submit">Add to Cart</button>
                         </div>
                     </form>
                 </div>
 
-                {/* ── Payment (only shown when cart has items) ─ */}
+                {/* ── Payment ──────────────────────────────── */}
                 {cart.length > 0 && (
                     <div className="section-box payment-box role-box">
                         <h2>Payment</h2>
-                        <h4>Total: ₱{total}</h4>
-
+                        <h4>Total: ₱{total.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</h4>
                         <form onSubmit={handleCheckout}>
                             <div className="payment-row">
                                 <div className="payment-group">
@@ -158,7 +253,6 @@ export default function Transactions() {
                                         <option value="Cash">Cash</option>
                                     </select>
                                 </div>
-
                                 <div className="payment-group">
                                     <label>Amount</label>
                                     <input
@@ -168,7 +262,6 @@ export default function Transactions() {
                                         onChange={e => setPayment({ ...payment, amount: e.target.value })}
                                     />
                                 </div>
-
                                 <div className="payment-group">
                                     <label>Reference</label>
                                     <input
@@ -177,7 +270,6 @@ export default function Transactions() {
                                         onChange={e => setPayment({ ...payment, refnum: e.target.value })}
                                     />
                                 </div>
-
                                 <button type="submit">Checkout</button>
                             </div>
                         </form>
@@ -204,8 +296,8 @@ export default function Transactions() {
                                     <td>{index + 1}</td>
                                     <td>{item.product}</td>
                                     <td>{item.quantity}</td>
-                                    <td>{item.price}</td>
-                                    <td>{item.subtotal}</td>
+                                    <td>₱{parseFloat(item.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
+                                    <td>₱{parseFloat(item.subtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
                                     <td>
                                         <button onClick={() => handleDelete(index)}>X</button>
                                     </td>
@@ -224,11 +316,10 @@ export default function Transactions() {
                                 <tr>
                                     <th>Receipt</th>
                                     <th>ID</th>
-                                    <th>Product</th>
-                                    <th>Qty</th>
-                                    <th>Price</th>
+                                    <th>Products</th>
+                                    <th>Total Qty</th>
                                     <th>Method</th>
-                                    <th>Amount</th>
+                                    <th>Amount Paid</th>
                                     <th>Change</th>
                                     <th>Subtotal</th>
                                     <th>Ref</th>
@@ -242,22 +333,21 @@ export default function Transactions() {
                                             <button
                                                 className="empDelButton"
                                                 onClick={() => {
-                                                    setSelectedReceipt(l);
-                                                    setReceiptOpen(true);
+                                                    setLogReceipt(l);
+                                                    setLogReceiptOpen(true);
                                                 }}
                                             >
                                                 Receipt
                                             </button>
                                         </td>
                                         <td>{l.log_id}</td>
-                                        <td>{l.product_name}</td>
+                                        <td style={{ maxWidth: 200, fontSize: 12 }}>{l.product_name}</td>
                                         <td>{l.quantity}</td>
-                                        <td>{l.price}</td>
                                         <td>{l.payment_method}</td>
-                                        <td>{l.amount_paid}</td>
-                                        <td>{l.change_amount}</td>
-                                        <td>{l.subtotal}</td>
-                                        <td>{l.reference_number}</td>
+                                        <td>₱{parseFloat(l.amount_paid).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
+                                        <td>₱{parseFloat(l.change_amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
+                                        <td>₱{parseFloat(l.subtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
+                                        <td>{l.reference_number || "—"}</td>
                                         <td>{l.timestamp}</td>
                                     </tr>
                                 ))}

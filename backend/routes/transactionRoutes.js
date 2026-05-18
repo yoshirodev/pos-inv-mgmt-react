@@ -22,6 +22,7 @@ function getISOWeekNumber(date) {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
+// ── Helper: auto-update sales tables after checkout ────────────
 async function updateSalesFromDB(dateStr, year, month, weekNum) {
     const [day] = await query(
         `SELECT COUNT(*) AS total_transactions,
@@ -107,9 +108,9 @@ router.post("/cart", (req, res) => {
 
             cart.push({
                 product,
-                quantity,
-                price:        data.selling_price,
-                subtotal:     data.selling_price * quantity,
+                quantity:     Number(quantity),
+                price:        parseFloat(data.selling_price),
+                subtotal:     parseFloat(data.selling_price) * Number(quantity),
                 inventory_id: data.id,
             });
 
@@ -125,6 +126,17 @@ router.delete("/cart/:index", (req, res) => {
 });
 
 // ── POST /transactions/checkout ────────────────────────────────
+// ONE transaction_log row per checkout regardless of how many
+// items are in the cart.
+//
+// product_name → "Product A, Product B, Product C"
+// quantity     → total items sold across all cart items
+// price        → average unit price (subtotal / total qty)
+// subtotal     → grand total of the whole cart
+// amount_paid, change_amount → as entered by cashier
+// inventory_id → NULL (group transaction, not tied to one product)
+// processed_by → logged-in user from x-user-id header
+// ──────────────────────────────────────────────────────────────
 router.post("/checkout", async (req, res) => {
     const { paymethod, amount, refnum } = req.body;
     const processedBy = req.headers["x-user-id"] || null;
@@ -137,22 +149,40 @@ router.post("/checkout", async (req, res) => {
     if (["GCash", "Maya", "MariBank"].includes(paymethod) && !refnum)
         return res.json({ error: "Reference required" });
 
-    if (amount < total)
+    if (Number(amount) < total)
         return res.json({ error: "Insufficient Amount" });
 
-    const change  = amount - total;
+    const change  = Number(amount) - total;
     const now     = new Date();
     const dateStr = now.toISOString().slice(0, 10);
     const year    = now.getFullYear();
     const month   = now.getMonth() + 1;
     const weekNum = getISOWeekNumber(now);
 
+    // ── Build grouped fields for the single log row ────────────
+    // Format: "Product A (x2), Product B (x1)"
+    const productNames  = cart.map(i => `${i.product} (x${i.quantity})`).join(", ");
+    const totalQty      = cart.reduce((sum, i) => sum + i.quantity, 0);
+    const totalSubtotal = total;
+    // Average price per unit for reference
+    const avgPrice      = totalQty > 0 ? (totalSubtotal / totalQty).toFixed(2) : 0;
+
+    // Snapshot of cart items for receipt (stored as JSON string in product_name
+    // is too lossy — we'll return it in the response instead)
+    const cartSnapshot = cart.map(i => ({
+        product:  i.product,
+        quantity: i.quantity,
+        price:    i.price,
+        subtotal: i.subtotal,
+    }));
+
     db.beginTransaction(err => {
         if (err) return res.json({ error: "Transaction error" });
 
-        let completed = 0;
-        let failed    = false;
+        let inventoryUpdated = 0;
+        let failed           = false;
 
+        // 1. Deduct stock for every cart item
         cart.forEach(item => {
             db.query(
                 "UPDATE inventory SET quantity = quantity - ? WHERE product_name = ?",
@@ -162,51 +192,62 @@ router.post("/checkout", async (req, res) => {
                         failed = true;
                         return db.rollback(() => res.json({ error: "Inventory update failed" }));
                     }
-                }
-            );
 
-            db.query(
-                `INSERT INTO transaction_log
-                    (inventory_id, processed_by, service_id,
-                     product_name, quantity, price,
-                     payment_method, amount_paid, change_amount,
-                     subtotal, reference_number, timestamp)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-                [
-                    item.inventory_id || null,
-                    processedBy,
-                    null,
-                    item.product,
-                    item.quantity,
-                    item.price,
-                    paymethod,
-                    amount,
-                    change,
-                    item.subtotal,
-                    refnum || null,
-                ],
-                (err) => {
-                    if (err && !failed) {
-                        failed = true;
-                        return db.rollback(() => res.json({ error: "Log insert failed" }));
-                    }
+                    inventoryUpdated++;
 
-                    completed++;
+                    // 2. Once all inventory updates are done, insert ONE log row
+                    if (inventoryUpdated === cart.length && !failed) {
+                        db.query(
+                            `INSERT INTO transaction_log
+                                (inventory_id, processed_by, service_id,
+                                 product_name, quantity, price,
+                                 payment_method, amount_paid, change_amount,
+                                 subtotal, reference_number, timestamp)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                            [
+                                null,           // group transaction — no single inventory_id
+                                processedBy,
+                                null,
+                                productNames,   // "Product A (x2), Product B (x1)"
+                                totalQty,       // total units sold
+                                avgPrice,       // average price per unit
+                                paymethod,
+                                Number(amount),
+                                change,
+                                totalSubtotal,
+                                refnum || null,
+                            ],
+                            async (err) => {
+                                if (err) {
+                                    return db.rollback(() => res.json({ error: "Log insert failed" }));
+                                }
 
-                    if (completed === cart.length && !failed) {
-                        db.commit(async (err) => {
-                            if (err) return res.json({ error: "Commit failed" });
+                                db.commit(async (err) => {
+                                    if (err) return res.json({ error: "Commit failed" });
 
-                            cart = [];
+                                    const savedCart = [...cartSnapshot];
+                                    cart = [];
 
-                            try {
-                                await updateSalesFromDB(dateStr, year, month, weekNum);
-                            } catch (e) {
-                                console.error("Sales auto-update error:", e.message);
+                                    // Auto-update sales tables
+                                    try {
+                                        await updateSalesFromDB(dateStr, year, month, weekNum);
+                                    } catch (e) {
+                                        console.error("Sales auto-update error:", e.message);
+                                    }
+
+                                    res.json({
+                                        message:  "success",
+                                        change,
+                                        // Return cart snapshot so frontend can build receipt
+                                        items:    savedCart,
+                                        payment:  paymethod,
+                                        amount:   Number(amount),
+                                        total:    totalSubtotal,
+                                        refnum:   refnum || null,
+                                    });
+                                });
                             }
-
-                            res.json({ message: "success", change });
-                        });
+                        );
                     }
                 }
             );
