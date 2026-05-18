@@ -98,15 +98,22 @@ export default function Services() {
     };
 
     // ── Delete personnel (confirmed via modal) ─────────────────
-    const handleDeletePersonel = () => {
-        const confirm = window.confirm("Are you sure to delete this personel?");
-        if (!confirm) return;
+    const handleDeletePersonel = (person) => {
+        const confirmDelete = window.confirm(
+            `Are you sure to delete ${person.name}?`
+        );
 
-        deletePersonel(deleteTarget.perso_id).then(() => {
-            setDeleteTarget(null);
-            getPersonel().then(r => setPersonelList(r.data));
-            getServices().then(r => setServices(r.data));
-        });
+        if (!confirmDelete) return;
+
+        deletePersonel(person.perso_id)
+            .then(() => {
+                getPersonel().then(r => setPersonelList(r.data));
+                getServices().then(r => setServices(r.data));
+            })
+            .catch(err => {
+                console.error(err);
+                alert("Failed to delete personnel.");
+            });
     };
 
     const total = serviceCart.reduce((sum, i) => sum + i.subtotal, 0);
@@ -248,6 +255,7 @@ export default function Services() {
                                 <div className="payment-group">
                                     <label>Amount</label>
                                     <input
+                                        min={0}
                                         type="number"
                                         required
                                         value={payment.amount}
@@ -258,6 +266,7 @@ export default function Services() {
                                 <div className="payment-group">
                                     <label>Reference</label>
                                     <input
+                                        min={0}
                                         type="number"
                                         value={payment.refnum}
                                         onChange={e => setPayment({ ...payment, refnum: e.target.value })}
@@ -310,7 +319,8 @@ export default function Services() {
                                     <div className="cart-group">
                                         <label>Phone No.</label>
                                         <input
-                                            type="text"
+                                            type="number"
+                                            min={0}
                                             value={personelForm.phone_no}
                                             onChange={e => setPersonelForm({ ...personelForm, phone_no: e.target.value })}
                                         />

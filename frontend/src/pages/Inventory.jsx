@@ -369,7 +369,7 @@ export default function Inventory() {
                             </button>
                         </div>
                         <div className="stock-modal-body">
-                            <form onSubmit={handleCreate} className="modal-form-grid">
+                            <form onSubmit={handleCreate} className="modal-form-grid" min={0}>
                                 {FORM_FIELDS.map(([label, field]) => (
                                     <div className="form-group" key={field}>
                                         <label>{label}</label>

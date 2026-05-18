@@ -223,6 +223,7 @@ export default function Transactions() {
                                 <label>Quantity</label>
                                 <input
                                     type="number"
+                                    min={0}
                                     required
                                     value={form.quantity}
                                     onChange={e => setForm({ ...form, quantity: e.target.value })}
@@ -256,6 +257,7 @@ export default function Transactions() {
                                 <div className="payment-group">
                                     <label>Amount</label>
                                     <input
+                                        min={0}
                                         type="number"
                                         required
                                         value={payment.amount}
@@ -265,6 +267,7 @@ export default function Transactions() {
                                 <div className="payment-group">
                                     <label>Reference</label>
                                     <input
+                                        min={0}
                                         type="number"
                                         value={payment.refnum}
                                         onChange={e => setPayment({ ...payment, refnum: e.target.value })}
