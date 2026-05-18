@@ -5,11 +5,11 @@ const API = axios.create({
 });
 
 API.interceptors.request.use((req) => {
-    const token = localStorage.getItem("token");
+    const token  = localStorage.getItem("token");
     const userID = localStorage.getItem("user_id");
 
-    if (token) req.headers.Authorization = `Bearer ${token}`;
-    if (userID) req.headers["x-user-id"] = userID;
+    if (token)  req.headers.Authorization = `Bearer ${token}`;
+    if (userID) req.headers["x-user-id"]  = userID;
 
     return req;
 });
@@ -18,20 +18,27 @@ export const login       = (data) => API.post("/auth/login", data);
 export const createUser  = (data) => API.post("/auth/register", data);
 
 export const getDashboard = (id) => API.get(`/dashboard/${id}`);
-export const deleteUser = (id) => API.delete(`/dashboard/${id}`, {
+export const deleteUser   = (id) => API.delete(`/dashboard/${id}`, {
     data: {
-        role: localStorage.getItem("role"),
+        role:             localStorage.getItem("role"),
         requestingUserID: localStorage.getItem("user_id")
     }
 });
 
-export const getInventory = () => API.get("/inventory");
-export const addStock = (id, quantity) => API.put(`/inventory/${id}/add-stock`, { quantity });
-export const createProduct = (data) => API.post("/inventory/create", data, { headers: { "Content-Type": "multipart/form-data" }});
-export const updateProduct = (id, data) => API.put(`/inventory/${id}`, data);
-export const deleteProduct = (id) => API.delete(`/inventory/${id}`, {
+export const getInventory    = ()       => API.get("/inventory");
+export const addStock        = (id, quantity) => API.put(`/inventory/${id}/add-stock`, { quantity });
+export const createProduct   = (data)   => API.post("/inventory/create", data, { headers: { "Content-Type": "multipart/form-data" }});
+export const updateProduct   = (id, data) => API.put(`/inventory/${id}`, data);
+export const deleteProduct   = (id)     => API.delete(`/inventory/${id}`, {
     headers: { role: localStorage.getItem("role") }
 });
+
+// ── Components ────────────────────────────────────────────────
+export const getComponentsByProduct = (productId) => API.get(`/components/${productId}`);
+export const getAllComponents        = ()           => API.get("/components/all");
+export const createComponent        = (data)       => API.post("/components/create", data);
+export const updateComponent        = (id, data)   => API.put(`/components/${id}`, data);
+export const deleteComponent        = (id)         => API.delete(`/components/${id}`);
 
 // ── Transactions ───────────────────────────────────────────────
 export const getProducts     = ()      => API.get("/transactions/products");

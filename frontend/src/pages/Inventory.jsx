@@ -2,33 +2,40 @@ import { useEffect, useState, useMemo } from "react";
 import Sidebar from "../components/Sidebar";
 import Topbar from "../components/Topbar";
 import ProfileBox from "../components/ProfileBox";
-import { getDashboard, getInventory, createProduct, updateProduct, deleteProduct, addStock } from "../services/api";
+import {
+    getDashboard, getInventory, createProduct, updateProduct, deleteProduct, addStock,
+    getComponentsByProduct, getAllComponents, createComponent, updateComponent, deleteComponent
+} from "../services/api";
 
 const EMPTY_CREATE = {
     product_name: "", type: "", category: "", brand: "",
     serial_number: "", cost: "", selling_price: "", quantity: "",
-    length: "", width: "", height: "", image: null,  description: ""
+    length: "", width: "", height: "", image: null, description: ""
 };
 
 const EMPTY_UPDATE = {
     productID: "", product_name: "", type: "", category: "", brand: "",
     serial_number: "", cost: "", selling_price: "", quantity: "",
-    length: "", width: "", height: "",  description: ""
+    length: "", width: "", height: "", description: ""
 };
 
-//  Sort options 
+const EMPTY_COMPONENT = {
+    component_name: "", description: "", quantity: "", cost: "", selling_price: ""
+};
+
+// Sort options
 const SORT_OPTIONS = [
-    { label: "ID",value: "id",type: "number" },
-    { label: "Name (A → Z)",       value: "product_name",  type: "string" },
-    { label: "Category (A → Z)",   value: "category",      type: "string" },
-    { label: "Type (A → Z)",       value: "type",          type: "string" },
-    { label: "Brand (A → Z)",      value: "brand",         type: "string" },
-    { label: "Cost (Low → High)",  value: "cost",          type: "number" },
-    { label: "Cost (High → Low)",  value: "cost_desc",     type: "number", desc: true },
-    { label: "Price (Low → High)", value: "selling_price", type: "number" },
-    { label: "Price (High → Low)", value: "selling_price_desc", type: "number", desc: true },
-    { label: "Stock (Low → High)", value: "quantity",      type: "number" },
-    { label: "Stock (High → Low)", value: "quantity_desc", type: "number", desc: true },
+    { label: "ID",                  value: "id",                 type: "number" },
+    { label: "Name (A → Z)",        value: "product_name",       type: "string" },
+    { label: "Category (A → Z)",    value: "category",           type: "string" },
+    { label: "Type (A → Z)",        value: "type",               type: "string" },
+    { label: "Brand (A → Z)",       value: "brand",              type: "string" },
+    { label: "Cost (Low → High)",   value: "cost",               type: "number" },
+    { label: "Cost (High → Low)",   value: "cost_desc",          type: "number", desc: true },
+    { label: "Price (Low → High)",  value: "selling_price",      type: "number" },
+    { label: "Price (High → Low)",  value: "selling_price_desc", type: "number", desc: true },
+    { label: "Stock (Low → High)",  value: "quantity",           type: "number" },
+    { label: "Stock (High → Low)",  value: "quantity_desc",      type: "number", desc: true },
 ];
 
 export default function Inventory() {
@@ -39,7 +46,7 @@ export default function Inventory() {
     // Sort
     const [sortValue, setSortValue] = useState("id");
 
-    // Modals
+    // Inventory modals
     const [stockModalOpen,   setStockModalOpen]   = useState(false);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [createModalOpen,  setCreateModalOpen]  = useState(false);
@@ -51,6 +58,19 @@ export default function Inventory() {
     const [createData, setCreateData] = useState(EMPTY_CREATE);
     const [updateData, setUpdateData] = useState(EMPTY_UPDATE);
 
+    // ── Component state ────────────────────────────────────────
+    const [componentsModalOpen,    setComponentsModalOpen]    = useState(false); // per-product modal
+    const [allComponentsModalOpen, setAllComponentsModalOpen] = useState(false); // show-all modal
+    const [addComponentModalOpen,  setAddComponentModalOpen]  = useState(false); // create component
+    const [editComponentModalOpen, setEditComponentModalOpen] = useState(false); // update component
+
+    const [selectedComponentProduct, setSelectedComponentProduct] = useState(null); // product whose components we're viewing
+    const [components,               setComponents]               = useState([]);   // components for that product
+    const [allComponents,            setAllComponents]            = useState([]);   // every component (show-all)
+
+    const [newComponentData,  setNewComponentData]  = useState(EMPTY_COMPONENT);
+    const [editComponentData, setEditComponentData] = useState({ ...EMPTY_COMPONENT, component_id: "" });
+
     const role   = localStorage.getItem("role");
     const userID = localStorage.getItem("user_id");
 
@@ -61,9 +81,7 @@ export default function Inventory() {
         getInventory().then(res => setProducts(res.data));
     };
 
-    useEffect(() => { fetchData(); }, []);
-
-    //  Move this ABOVE the early return 
+    // ── Sorted products ────────────────────────────────────────
     const sortedProducts = useMemo(() => {
         const option = SORT_OPTIONS.find(o => o.value === sortValue);
         if (!option) return products;
@@ -87,10 +105,12 @@ export default function Inventory() {
 
     if (!data) return null;
 
-    //  Create 
+    // ── Inventory CRUD ─────────────────────────────────────────
     const handleCreate = (e) => {
         e.preventDefault();
         const formData = new FormData();
+        // Append added_by so the backend can store it
+        formData.append("added_by", userID);
         Object.entries(createData).forEach(([key, val]) => {
             if (val !== null && val !== "") formData.append(key, val);
         });
@@ -101,25 +121,21 @@ export default function Inventory() {
         }).catch(() => alert("Failed to create product."));
     };
 
-    //  Update 
     const handleUpdate = (e) => {
         e.preventDefault();
         updateProduct(updateData.productID, updateData).then(() => {
             fetchData();
             setUpdateData(EMPTY_UPDATE);
             setUpdateModalOpen(false);
-
-        setSelectedProduct(prev => prev ? { ...prev, ...updateData } : prev);
+            setSelectedProduct(prev => prev ? { ...prev, ...updateData } : prev);
         }).catch(() => alert("Failed to update product."));
     };
 
-    //  Delete 
     const handleDelete = (id) => {
         if (!window.confirm("Are you sure to delete this item?")) return;
         deleteProduct(id).then(() => setProducts(products.filter(p => p.id !== id)));
     };
 
-    //  Add Stock 
     const handleAddStock = () => {
         if (!selectedProduct || stockToAdd <= 0) {
             alert("Please enter a valid quantity.");
@@ -133,7 +149,6 @@ export default function Inventory() {
         }).catch(() => alert("Failed to add stock."));
     };
 
-    //  update modal pre-filled 
     const openUpdateModal = (product) => {
         setUpdateData({
             productID:     product.id,
@@ -148,24 +163,104 @@ export default function Inventory() {
             length:        product.length        || "",
             width:         product.width         || "",
             height:        product.height        || "",
-            description:   product.description   || "", 
+            description:   product.description   || "",
         });
         setUpdateModalOpen(true);
     };
 
+    // ── Component helpers ──────────────────────────────────────
+
+    // Open the per-product components modal
+    const openComponentsModal = (product) => {
+        setSelectedComponentProduct(product);
+        getComponentsByProduct(product.id)
+            .then(res => setComponents(res.data))
+            .catch(() => setComponents([]));
+        setComponentsModalOpen(true);
+    };
+
+    // Refresh component list for the currently open product
+    const refreshComponents = () => {
+        if (!selectedComponentProduct) return;
+        getComponentsByProduct(selectedComponentProduct.id)
+            .then(res => setComponents(res.data))
+            .catch(() => setComponents([]));
+    };
+
+    // Open show-all modal
+    const openAllComponentsModal = () => {
+        getAllComponents()
+            .then(res => setAllComponents(res.data))
+            .catch(() => setAllComponents([]));
+        setAllComponentsModalOpen(true);
+    };
+
+    // Add component
+    const handleAddComponent = (e) => {
+        e.preventDefault();
+        const payload = {
+            ...newComponentData,
+            product_id: selectedComponentProduct.id,
+        };
+        createComponent(payload).then(() => {
+            refreshComponents();
+            setNewComponentData(EMPTY_COMPONENT);
+            setAddComponentModalOpen(false);
+        }).catch(() => alert("Failed to add component."));
+    };
+
+    // Delete component
+    const handleDeleteComponent = (componentId) => {
+        if (!window.confirm("Are you sure you want to delete this component?")) return;
+        deleteComponent(componentId).then(() => refreshComponents())
+            .catch(() => alert("Failed to delete component."));
+    };
+
+    // Open edit component modal
+    const openEditComponentModal = (comp) => {
+        setEditComponentData({
+            component_id:   comp.component_id,
+            component_name: comp.component_name  || "",
+            description:    comp.description     || "",
+            quantity:       comp.quantity        || "",
+            cost:           comp.cost            || "",
+            selling_price:  comp.selling_price   || "",
+        });
+        setEditComponentModalOpen(true);
+    };
+
+    // Save component update
+    const handleUpdateComponent = (e) => {
+        e.preventDefault();
+        const { component_id, ...rest } = editComponentData;
+        updateComponent(component_id, rest).then(() => {
+            refreshComponents();
+            setEditComponentModalOpen(false);
+        }).catch(() => alert("Failed to update component."));
+    };
+
+    // ── Shared form fields config ──────────────────────────────
     const FORM_FIELDS = [
         ["Product Name", "product_name"],
-        ["Type",         "type"],
-        ["Category",     "category"],
-        ["Brand",        "brand"],
-        ["Serial No.",   "serial_number"],
-        ["Cost",         "cost"],
-        ["Selling Price","selling_price"],
-        ["Quantity",     "quantity"],
-        ["Length",       "length"],
-        ["Width",        "width"],
-        ["Height",       "height"],
-        ["Description", "description"],
+        ["Type",          "type"],
+        ["Category",      "category"],
+        ["Brand",         "brand"],
+        ["Serial No.",    "serial_number"],
+        ["Cost",          "cost"],
+        ["Selling Price", "selling_price"],
+        ["Quantity",      "quantity"],
+        ["Length",        "length"],
+        ["Width",         "width"],
+        ["Height",        "height"],
+        ["Description",   "description"],
+    ];
+
+    const COMPONENT_FIELDS = [
+        ["Component Name", "component_name"],
+        ["Description",    "description"],
+        ["Quantity",       "quantity"],
+        ["Cost",           "cost"],
+        ["Selling Price",  "selling_price"],
     ];
 
     return (
@@ -178,10 +273,15 @@ export default function Inventory() {
                 <h1>Manager Controls <i className="fa-solid fa-sliders"></i></h1>
                 <h2>Inventory</h2>
 
-                {/* ── Action bar: Create button + Sort dropdown ─ */}
+                {/* ── Action bar ───────────────────────────────── */}
                 <div className="inventory-actions">
                     <button className="btn-primary" onClick={() => setCreateModalOpen(true)}>
                         <i className="fa-solid fa-plus"></i> Create Product
+                    </button>
+
+                    {/* Show All Sub Components button */}
+                    <button className="btn-secondary" onClick={openAllComponentsModal}>
+                        <i className="fa-solid fa-cubes"></i> Show All Sub Components
                     </button>
 
                     {/* Sort dropdown */}
@@ -203,7 +303,7 @@ export default function Inventory() {
                     </div>
                 </div>
 
-                {/* ── Inventory Grid ─────────────────────────── */}
+                {/* ── Inventory Grid ───────────────────────────── */}
                 <section className="main-section">
                     <h1>
                         Inventory <i className="fa-solid fa-boxes-stacked"></i>
@@ -232,6 +332,11 @@ export default function Inventory() {
 
                                 <button className="view-details-btn" onClick={() => { setSelectedProduct(row); setDetailsModalOpen(true); }}>
                                     View Details
+                                </button>
+
+                                {/* Components button */}
+                                <button className="view-details-btn" style={{ marginTop: 6 }} onClick={() => openComponentsModal(row)}>
+                                    <i className="fa-solid fa-cube"></i> Components
                                 </button>
 
                                 <button className="add-stock-btn" onClick={() => { setSelectedProduct(row); setStockToAdd(1); setStockModalOpen(true); }}>
@@ -265,25 +370,24 @@ export default function Inventory() {
                         </div>
                         <div className="stock-modal-body">
                             <form onSubmit={handleCreate} className="modal-form-grid">
-                               {FORM_FIELDS.map(([label, field]) => (
-    <div className="form-group" key={field}>
-        <label>{label}</label>
-        {field === "description" ? (
-            <textarea
-                rows={3}
-                value={createData[field]}  // or updateData[field] in the update modal
-                onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
-                // onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })} // for update modal
-            />
-        ) : (
-            <input
-                type="text"
-                value={createData[field]}  // or updateData[field]
-                onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
-            />
-        )}
-    </div>
-))}
+                                {FORM_FIELDS.map(([label, field]) => (
+                                    <div className="form-group" key={field}>
+                                        <label>{label}</label>
+                                        {field === "description" ? (
+                                            <textarea
+                                                rows={3}
+                                                value={createData[field]}
+                                                onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
+                                            />
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={createData[field]}
+                                                onChange={e => setCreateData({ ...createData, [field]: e.target.value })}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
                                 <div className="form-group full-width">
                                     <label>Image</label>
                                     <input
@@ -304,44 +408,44 @@ export default function Inventory() {
             )}
 
             {/* ══ UPDATE MODAL ══════════════════════════════════ */}
-{updateModalOpen && (
-    <div className="stock-modal-overlay">
-        <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
-            <div className="stock-modal-header">
-                <h3>Update — {updateData.product_name}</h3>
-                <button className="stock-modal-close" onClick={() => setUpdateModalOpen(false)}>
-                    <i className="fa-solid fa-xmark"></i>
-                </button>
-            </div>
-            <div className="stock-modal-body">
-                <form onSubmit={handleUpdate} className="modal-form-grid">
-                    {FORM_FIELDS.map(([label, field]) => (
-                        <div className="form-group" key={field}>
-                            <label>{label}</label>
-                            {field === "description" ? (
-                                <textarea
-                                    rows={3}
-                                    value={updateData[field] || ""}
-                                    onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
-                                />
-                            ) : (
-                                <input
-                                    type="text"
-                                    value={updateData[field] || ""}
-                                    onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
-                                />
-                            )}
+            {updateModalOpen && (
+                <div className="stock-modal-overlay">
+                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>Update — {updateData.product_name}</h3>
+                            <button className="stock-modal-close" onClick={() => setUpdateModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
                         </div>
-                    ))}
-                    <div className="stock-modal-footer full-width">
-                        <button type="button" className="btn-secondary" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
-                        <button type="submit" className="btn-primary">Save Changes</button>
+                        <div className="stock-modal-body">
+                            <form onSubmit={handleUpdate} className="modal-form-grid">
+                                {FORM_FIELDS.map(([label, field]) => (
+                                    <div className="form-group" key={field}>
+                                        <label>{label}</label>
+                                        {field === "description" ? (
+                                            <textarea
+                                                rows={3}
+                                                value={updateData[field] || ""}
+                                                onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
+                                            />
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={updateData[field] || ""}
+                                                onChange={e => setUpdateData({ ...updateData, [field]: e.target.value })}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                                <div className="stock-modal-footer full-width">
+                                    <button type="button" className="btn-secondary" onClick={() => setUpdateModalOpen(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
                     </div>
-                </form>
-            </div>
-        </div>
-    </div>
-)}
+                </div>
+            )}
 
             {/* ══ DETAILS MODAL ════════════════════════════════ */}
             {detailsModalOpen && selectedProduct && (
@@ -403,6 +507,221 @@ export default function Inventory() {
                                 <button type="button" className="btn-secondary" onClick={() => { setStockModalOpen(false); setSelectedProduct(null); }}>Cancel</button>
                                 <button type="button" className="btn-primary" onClick={handleAddStock}>Add Stock</button>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══ COMPONENTS MODAL (per product) ═══════════════ */}
+            {componentsModalOpen && selectedComponentProduct && (
+                <div className="stock-modal-overlay">
+                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>
+                                <i className="fa-solid fa-cube"></i>&nbsp;
+                                Components — {selectedComponentProduct.product_name}
+                            </h3>
+                            <button className="stock-modal-close" onClick={() => setComponentsModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="stock-modal-body">
+                            {/* Add Component button */}
+                            <div style={{ marginBottom: 12 }}>
+                                <button
+                                    className="btn-primary"
+                                    onClick={() => { setNewComponentData(EMPTY_COMPONENT); setAddComponentModalOpen(true); }}
+                                >
+                                    <i className="fa-solid fa-plus"></i> Add Component
+                                </button>
+                            </div>
+
+                            {/* Components table */}
+                            {components.length === 0 ? (
+                                <p style={{ color: "#64748b", textAlign: "center", padding: "20px 0" }}>
+                                    No components added yet.
+                                </p>
+                            ) : (
+                                <div style={{ overflowX: "auto" }}>
+                                    <table className="components-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Name</th>
+                                                <th>Description</th>
+                                                <th>Qty</th>
+                                                <th>Cost</th>
+                                                <th>Selling Price</th>
+                                                <th>Actions</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {components.map(comp => (
+                                                <tr key={comp.component_id}>
+                                                    <td>{comp.component_id}</td>
+                                                    <td>{comp.component_name}</td>
+                                                    <td>{comp.description}</td>
+                                                    <td>{comp.quantity}</td>
+                                                    <td>₱{comp.cost}</td>
+                                                    <td>₱{comp.selling_price}</td>
+                                                    <td>
+                                                        <button
+                                                            className="add-stock-btn"
+                                                            style={{ marginRight: 6 }}
+                                                            onClick={() => openEditComponentModal(comp)}
+                                                        >
+                                                            Update
+                                                        </button>
+                                                        <button
+                                                            className="delete-button-inv"
+                                                            onClick={() => handleDeleteComponent(comp.component_id)}
+                                                        >
+                                                            Delete
+                                                        </button>
+                                                    </td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══ ADD COMPONENT MODAL ══════════════════════════ */}
+            {addComponentModalOpen && (
+                <div className="stock-modal-overlay">
+                    <div className="stock-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>Add Component</h3>
+                            <button className="stock-modal-close" onClick={() => setAddComponentModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="stock-modal-body">
+                            <form onSubmit={handleAddComponent} className="modal-form-grid">
+                                {COMPONENT_FIELDS.map(([label, field]) => (
+                                    <div className="form-group" key={field}>
+                                        <label>{label}</label>
+                                        {field === "description" ? (
+                                            <textarea
+                                                rows={3}
+                                                value={newComponentData[field]}
+                                                onChange={e => setNewComponentData({ ...newComponentData, [field]: e.target.value })}
+                                            />
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={newComponentData[field]}
+                                                onChange={e => setNewComponentData({ ...newComponentData, [field]: e.target.value })}
+                                                required={field === "component_name"}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                                <div className="stock-modal-footer full-width">
+                                    <button type="button" className="btn-secondary" onClick={() => setAddComponentModalOpen(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Add Component</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══ EDIT COMPONENT MODAL ═════════════════════════ */}
+            {editComponentModalOpen && (
+                <div className="stock-modal-overlay" onClick={() => setEditComponentModalOpen(false)}>
+                    <div className="stock-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>Update Component — {editComponentData.component_name}</h3>
+                            <button className="stock-modal-close" onClick={() => setEditComponentModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="stock-modal-body">
+                            <form onSubmit={handleUpdateComponent} className="modal-form-grid">
+                                {COMPONENT_FIELDS.map(([label, field]) => (
+                                    <div className="form-group" key={field}>
+                                        <label>{label}</label>
+                                        {field === "description" ? (
+                                            <textarea
+                                                rows={3}
+                                                value={editComponentData[field] || ""}
+                                                onChange={e => setEditComponentData({ ...editComponentData, [field]: e.target.value })}
+                                            />
+                                        ) : (
+                                            <input
+                                                type="text"
+                                                value={editComponentData[field] || ""}
+                                                onChange={e => setEditComponentData({ ...editComponentData, [field]: e.target.value })}
+                                            />
+                                        )}
+                                    </div>
+                                ))}
+                                <div className="stock-modal-footer full-width">
+                                    <button type="button" className="btn-secondary" onClick={() => setEditComponentModalOpen(false)}>Cancel</button>
+                                    <button type="submit" className="btn-primary">Save Changes</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* ══ SHOW ALL COMPONENTS MODAL ════════════════════ */}
+            {allComponentsModalOpen && (
+                <div className="stock-modal-overlay" onClick={() => setAllComponentsModalOpen(false)}>
+                    <div className="stock-modal large-modal" onClick={e => e.stopPropagation()}>
+                        <div className="stock-modal-header">
+                            <h3>
+                                <i className="fa-solid fa-cubes"></i>&nbsp;
+                                All Sub Components
+                                <span style={{ fontSize: 13, fontWeight: 400, color: "#64748b", marginLeft: 10 }}>
+                                    {allComponents.length} total
+                                </span>
+                            </h3>
+                            <button className="stock-modal-close" onClick={() => setAllComponentsModalOpen(false)}>
+                                <i className="fa-solid fa-xmark"></i>
+                            </button>
+                        </div>
+                        <div className="stock-modal-body">
+                            {allComponents.length === 0 ? (
+                                <p style={{ color: "#64748b", textAlign: "center", padding: "20px 0" }}>
+                                    No components found.
+                                </p>
+                            ) : (
+                                <div style={{ overflowX: "auto" }}>
+                                    <table className="components-table">
+                                        <thead>
+                                            <tr>
+                                                <th>ID</th>
+                                                <th>Product</th>
+                                                <th>Component Name</th>
+                                                <th>Description</th>
+                                                <th>Qty</th>
+                                                <th>Cost</th>
+                                                <th>Selling Price</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {allComponents.map(comp => (
+                                                <tr key={comp.component_id}>
+                                                    <td>{comp.component_id}</td>
+                                                    <td>{comp.product_name}</td>
+                                                    <td>{comp.component_name}</td>
+                                                    <td>{comp.description}</td>
+                                                    <td>{comp.quantity}</td>
+                                                    <td>₱{comp.cost}</td>
+                                                    <td>₱{comp.selling_price}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
