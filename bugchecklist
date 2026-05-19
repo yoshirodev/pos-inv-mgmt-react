@@ -1,0 +1,53 @@
+Dashboard Page
+    profile button
+    Logout
+    Sales Today Card
+    Overall Stock Card 
+    System Notification Card 
+    Revenue Over Time Card 
+    Top Selling Product Card 
+    Account Management Table 
+    Account Creation Box 
+
+Inventory
+    Create Product
+        Test all input
+    Show all Component button
+    Product Card
+        View Details 
+        Components 
+            Add Component 
+                Test all input
+            Update 
+            Delete 
+        Add Stock 
+        Update 
+        Delete
+
+Sales Overview 
+    Update Table button
+    Daily Sales 
+    Weekly Sales 
+    Monthly Sales 
+
+Services and Payment
+    Services card
+        Dropdown
+        Done button
+    Pending Payment Box
+    Payment Box
+        Test all input
+    Add Service Personel
+        Test all input
+    Service Personel Table
+        Delete Button
+
+Product Payments
+    Cart Box
+        Product select Dropdown
+        Pending Queue Box
+            Delete Button
+        Payment Box
+            Test all input
+        Transaction Log
+            Receipt Open Button
