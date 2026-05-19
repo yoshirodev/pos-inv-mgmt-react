@@ -23,6 +23,8 @@ export default function Services() {
     const [profileOpen, setProfileOpen] = useState(false);
     const [payment, setPayment]         = useState({ paymethod: "", amount: "", refnum: "" });
 
+    const isOnline = ["GCash", "Maya", "MariBank"].includes(payment.paymethod);
+
     // ── Personnel creation form ────────────────────────────────
     const [personelForm, setPersonelForm] = useState({
         first_name: "", last_name: "", email: "", phone_no: ""
@@ -72,15 +74,51 @@ export default function Services() {
     // ── Checkout service cart ─────────────────────────────────
     const handleCheckout = (e) => {
         e.preventDefault();
-        checkoutService(payment).then(res => {
+
+        // Online payments require reference input
+        if (isOnline && !payment.refnum.trim()) {
+            alert("Please enter a reference number for online payment.");
+            return;
+        }
+
+        const payload = {
+            paymethod: payment.paymethod,
+            amount: payment.amount,
+            // Online → OP- prefix
+            // Cash   → null so backend auto-generates CP-
+            refnum: isOnline
+                ? `OP-${payment.refnum.trim()}`
+                : null,
+        };
+
+        checkoutService(payload).then(res => {
             if (res.data.error) {
                 alert(res.data.error);
             } else {
-                alert("Success! Change: ₱" + res.data.change);
+                alert(
+                    `Success!\n` +
+                    `Change: ₱${parseFloat(res.data.change).toLocaleString("en-PH", {
+                        minimumFractionDigits: 2
+                    })}`
+                );
+
                 setServiceCart([]);
-                setPayment({ paymethod: "", amount: "", refnum: "" });
+                setPayment({
+                    paymethod: "",
+                    amount: "",
+                    refnum: ""
+                });
+
                 getServices().then(r => setServices(r.data));
             }
+        });
+    };
+
+    const handleMethodChange = (e) => {
+        setPayment({
+            ...payment,
+            paymethod: e.target.value,
+            refnum: ""
         });
     };
 
@@ -155,6 +193,7 @@ export default function Services() {
                                                 onChange={e =>
                                                     handleAssignPersonel(s.service_id, e.target.value)
                                                 }
+                                                required
                                             >
                                                 <option value="">-- Assign --</option>
                                                 {personelList.map(p => (
@@ -242,7 +281,7 @@ export default function Services() {
                                     <label>Payment Method</label>
                                     <select
                                         value={payment.paymethod}
-                                        onChange={e => setPayment({ ...payment, paymethod: e.target.value })}
+                                        onChange={handleMethodChange}
                                     >
                                         <option value="">--Select--</option>
                                         <option value="GCash">GCash</option>
@@ -263,15 +302,39 @@ export default function Services() {
                                     />
                                 </div>
 
-                                <div className="payment-group">
-                                    <label>Reference</label>
-                                    <input
-                                        min={0}
-                                        type="number"
-                                        value={payment.refnum}
-                                        onChange={e => setPayment({ ...payment, refnum: e.target.value })}
-                                    />
-                                </div>
+                                {/* Reference — only for online payments */}
+                                {isOnline && (
+                                    <div className="payment-group">
+                                        <label>Reference No.</label>
+                                        <input
+                                            type="text"
+                                            value={payment.refnum}
+                                            onChange={e =>
+                                                setPayment({
+                                                    ...payment,
+                                                    refnum: e.target.value
+                                                })
+                                            }
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Cash auto-generated reference */}
+                                {payment.paymethod === "Cash" && (
+                                    <div className="payment-group">
+                                        <label>Reference No.</label>
+                                        <input
+                                            type="text"
+                                            value="Auto-generated"
+                                            disabled
+                                            style={{
+                                                background: "#f1f5f9",
+                                                color: "#94a3b8",
+                                                cursor: "not-allowed"
+                                            }}
+                                        />
+                                    </div>
+                                )}
 
                                 <button type="submit">Checkout</button>
                             </div>

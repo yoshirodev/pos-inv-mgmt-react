@@ -22,6 +22,13 @@ function getISOWeekNumber(date) {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
+// ── Helper: generate CP- reference for cash payments ──────────
+function generateCashRef() {
+    const ts = Date.now();
+    const rand = Math.floor(1000 + Math.random() * 9000);
+    return `CP-${ts}${rand}`;
+}
+
 async function updateSalesFromDB(dateStr, year, month, weekNum) {
     const [day] = await query(
         `SELECT COUNT(*) AS total_transactions,
@@ -156,96 +163,122 @@ router.patch("/assign-personel", (req, res) => {
     );
 });
 
-// ── POST /services/checkout ────────────────────────────────────
 router.post("/checkout", async (req, res) => {
-    const { paymethod, amount, refnum } = req.body;
-    const processedBy = req.headers["x-user-id"] || null;
+    try {
+        const { paymethod, amount } = req.body;
+        let { refnum } = req.body;
+        const processedBy = req.headers["x-user-id"] || null;
 
-    const total = serviceCart.reduce((sum, i) => sum + i.subtotal, 0);
+        const total = serviceCart.reduce(
+            (sum, i) => sum + Number(i.subtotal),
+            0
+        );
 
-    if (!paymethod)
-        return res.json({ error: "Select payment method" });
+        if (!paymethod)
+            return res.json({ error: "Select payment method" });
 
-    if (["GCash", "Maya", "MariBank"].includes(paymethod) && !refnum)
-        return res.json({ error: "Reference required" });
+        // Online payments require reference number
+        if (
+            ["GCash", "Maya", "MariBank"].includes(paymethod) &&
+            !refnum
+        ) {
+            return res.json({
+                error: "Reference number is required for online payments."
+            });
+        }
 
-    if (amount < total)
-        return res.json({ error: "Insufficient Amount" });
+        if (Number(amount) < total)
+            return res.json({ error: "Insufficient Amount" });
 
-    const change  = amount - total;
-    const now     = new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-    const year    = now.getFullYear();
-    const month   = now.getMonth() + 1;
-    const weekNum = getISOWeekNumber(now);
+        // Cash payment → auto-generate CP- reference
+        if (paymethod === "Cash" || !refnum) {
+            refnum = generateCashRef();
+        }
 
-    db.beginTransaction(err => {
-        if (err) return res.json({ error: "Transaction error" });
+        const change = Number(amount) - total;
+        const now = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const year = now.getFullYear();
+        const month = now.getMonth() + 1;
+        const weekNum = getISOWeekNumber(now);
 
-        let completed = 0;
-        let failed    = false;
+        await new Promise((resolve, reject) => {
+            db.beginTransaction(async (err) => {
+                if (err) return reject(err);
 
-        serviceCart.forEach(item => {
-            db.query(
-                `INSERT INTO transaction_log
-                    (inventory_id, processed_by, service_id,
-                     product_name, quantity, price,
-                     payment_method, amount_paid, change_amount,
-                     subtotal, reference_number, timestamp)
-                 VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-                [
-                    null,
-                    processedBy,
-                    item.service_id || null,
-                    item.product,
-                    item.quantity,
-                    item.price,
-                    paymethod,
-                    amount,
-                    change,
-                    item.subtotal,
-                    refnum || null,
-                ],
-                (err) => {
-                    if (err && !failed) {
-                        failed = true;
-                        return db.rollback(() => res.json({ error: "Log insert failed" }));
-                    }
-
-                    if (item.service_id) {
-                        db.query(
-                            "UPDATE service_requests SET status = 'Done' WHERE service_id = ?",
-                            [item.service_id],
-                            (err) => {
-                                if (err && !failed) {
-                                    failed = true;
-                                    return db.rollback(() => res.json({ error: "Service status update failed" }));
-                                }
-                            }
+                try {
+                    // Insert one transaction row per service item
+                    for (const item of serviceCart) {
+                        await query(
+                            `INSERT INTO transaction_log
+                                (inventory_id, processed_by, service_id,
+                                 product_name, quantity, price,
+                                 payment_method, amount_paid, change_amount,
+                                 subtotal, reference_number, timestamp)
+                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                            [
+                                null,
+                                processedBy,
+                                item.service_id || null,
+                                item.product,
+                                item.quantity,
+                                item.price,
+                                paymethod,
+                                Number(amount),
+                                change,
+                                item.subtotal,
+                                refnum, // CP-... or OP-...
+                            ]
                         );
+
+                        // Mark service as fully paid
+                        if (item.service_id) {
+                            await query(
+                                `UPDATE service_requests
+                                 SET status = 'Done'
+                                 WHERE service_id = ?`,
+                                [item.service_id]
+                            );
+                        }
                     }
 
-                    completed++;
-
-                    if (completed === serviceCart.length && !failed) {
-                        db.commit(async (err) => {
-                            if (err) return res.json({ error: "Commit failed" });
-
-                            serviceCart = [];
-
-                            try {
-                                await updateSalesFromDB(dateStr, year, month, weekNum);
-                            } catch (e) {
-                                console.error("Sales auto-update error:", e.message);
-                            }
-
-                            res.json({ message: "success", change });
-                        });
-                    }
+                    db.commit((err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    });
+                } catch (innerErr) {
+                    db.rollback(() => reject(innerErr));
                 }
-            );
+            });
         });
-    });
+
+        // Snapshot before clearing cart
+        const cartSnapshot = [...serviceCart];
+
+        // Clear cart
+        serviceCart = [];
+
+        // Update sales summary tables
+        try {
+            await updateSalesFromDB(dateStr, year, month, weekNum);
+        } catch (e) {
+            console.error("Sales auto-update error:", e.message);
+        }
+
+        res.json({
+            message: "success",
+            change,
+            items: cartSnapshot,
+            payment: paymethod,
+            amount: Number(amount),
+            total,
+            refnum, // send back generated/stored reference
+        });
+
+    } catch (err) {
+        console.error("Service checkout error:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ══════════════════════════════════════════════════════════════
