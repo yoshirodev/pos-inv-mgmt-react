@@ -571,12 +571,14 @@ export default function Inventory() {
                                                         >
                                                             Update
                                                         </button>
-                                                        <button
-                                                            className="delete-button-inv"
-                                                            onClick={() => handleDeleteComponent(comp.component_id)}
-                                                        >
-                                                            Delete
-                                                        </button>
+                                                        {role === "Manager" && (
+                                                            <button
+                                                                className="delete-button-inv"
+                                                                onClick={() => handleDeleteComponent(comp.component_id)}
+                                                            >
+                                                                Delete
+                                                            </button>
+                                                        )}
                                                     </td>
                                                 </tr>
                                             ))}

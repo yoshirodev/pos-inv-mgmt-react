@@ -44,7 +44,7 @@
                 <?php while ($row = $result->fetch_assoc()): ?>
                     <div class="product-card">
                         <div class="product-image">
-                            <img class="product-image" src="<?= htmlspecialchars("../frontend/public/images/" . $row['image_path']) ?>" alt="product">
+                            <img class="product-image" src="<?= htmlspecialchars("../backend/uploads/" . $row['image_path']) ?>" alt="product">
                         </div>
                         <h3><?= htmlspecialchars($row['product_name']) ?></h3>
                         <p class="price">₱<?= number_format($row['cost'], 2) ?></p>

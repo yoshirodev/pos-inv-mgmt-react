@@ -22,6 +22,15 @@ function getISOWeekNumber(date) {
     return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
 }
 
+// ── Helper: generate CP- reference for cash payments ──────────
+// Format: CP-<timestamp><4-digit random>
+// e.g. CP-17346829341234
+function generateCashRef() {
+    const ts   = Date.now();
+    const rand = Math.floor(1000 + Math.random() * 9000); // 4-digit
+    return `CP-${ts}${rand}`;
+}
+
 // ── Helper: auto-update sales tables after checkout ────────────
 async function updateSalesFromDB(dateStr, year, month, weekNum) {
     const [day] = await query(
@@ -91,32 +100,67 @@ router.get("/cart", (req, res) => {
 });
 
 // ── POST /transactions/cart ────────────────────────────────────
-router.post("/cart", (req, res) => {
-    const { product, quantity } = req.body;
+router.post("/cart", async (req, res) => {
+    try {
+        const { product, quantity } = req.body;
+        const qty = Number(quantity);
 
-    db.query(
-        "SELECT id, selling_price, quantity FROM inventory WHERE product_name = ?",
-        [product],
-        (err, result) => {
-            if (err || result.length === 0)
-                return res.json({ error: "Product not found" });
+        const productResult = await query(
+            "SELECT id, selling_price, quantity FROM inventory WHERE product_name = ?",
+            [product]
+        );
 
-            const data = result[0];
+        if (!productResult.length)
+            return res.json({ error: "Product not found" });
 
-            if (quantity > data.quantity)
-                return res.json({ error: "No Stock Available" });
+        const prod = productResult[0];
 
-            cart.push({
-                product,
-                quantity:     Number(quantity),
-                price:        parseFloat(data.selling_price),
-                subtotal:     parseFloat(data.selling_price) * Number(quantity),
-                inventory_id: data.id,
-            });
+        if (qty > prod.quantity)
+            return res.json({ error: "No Stock Available" });
 
-            res.json(cart);
+        // Get components linked to this product
+        const components = await query(
+            `SELECT component_id, component_name, quantity AS comp_stock,
+                    selling_price AS comp_price
+             FROM components WHERE product_id = ?`,
+            [prod.id]
+        );
+
+        // Check component stock
+        for (const comp of components) {
+            if (comp.comp_stock < qty) {
+                return res.json({
+                    error: `Insufficient component stock: "${comp.component_name}" only has ${comp.comp_stock} left.`
+                });
+            }
         }
-    );
+
+        const componentPricePerUnit = components.reduce(
+            (sum, c) => sum + parseFloat(c.comp_price), 0
+        );
+
+        const unitPrice = parseFloat(prod.selling_price) + componentPricePerUnit;
+        const subtotal  = unitPrice * qty;
+
+        cart.push({
+            product,
+            quantity:     qty,
+            price:        unitPrice,
+            subtotal,
+            inventory_id: prod.id,
+            components:   components.map(c => ({
+                component_id:   c.component_id,
+                component_name: c.component_name,
+                comp_price:     parseFloat(c.comp_price),
+            })),
+        });
+
+        res.json(cart);
+
+    } catch (err) {
+        console.error("Add to cart error:", err);
+        res.status(500).json({ error: "Server error" });
+    }
 });
 
 // ── DELETE /transactions/cart/:index ───────────────────────────
@@ -126,133 +170,131 @@ router.delete("/cart/:index", (req, res) => {
 });
 
 // ── POST /transactions/checkout ────────────────────────────────
-// ONE transaction_log row per checkout regardless of how many
-// items are in the cart.
-//
-// product_name → "Product A, Product B, Product C"
-// quantity     → total items sold across all cart items
-// price        → average unit price (subtotal / total qty)
-// subtotal     → grand total of the whole cart
-// amount_paid, change_amount → as entered by cashier
-// inventory_id → NULL (group transaction, not tied to one product)
-// processed_by → logged-in user from x-user-id header
-// ──────────────────────────────────────────────────────────────
+// Reference number logic:
+//   Cash    → refnum is null from frontend → backend generates CP-<timestamp><rand>
+//   Online  → refnum is "OP-<input>" from frontend → stored as-is
 router.post("/checkout", async (req, res) => {
-    const { paymethod, amount, refnum } = req.body;
-    const processedBy = req.headers["x-user-id"] || null;
+    try {
+        const { paymethod, amount } = req.body;
+        let   { refnum }            = req.body;
+        const processedBy           = req.headers["x-user-id"] || null;
 
-    const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
+        const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
 
-    if (!paymethod)
-        return res.json({ error: "Select payment method" });
+        if (!paymethod)
+            return res.json({ error: "Select payment method" });
 
-    if (["GCash", "Maya", "MariBank"].includes(paymethod) && !refnum)
-        return res.json({ error: "Reference required" });
+        // Online payments must have OP- reference (frontend already validates + prefixes)
+        if (["GCash", "Maya", "MariBank"].includes(paymethod) && !refnum)
+            return res.json({ error: "Reference number is required for online payments." });
 
-    if (Number(amount) < total)
-        return res.json({ error: "Insufficient Amount" });
+        if (Number(amount) < total)
+            return res.json({ error: "Insufficient Amount" });
 
-    const change  = Number(amount) - total;
-    const now     = new Date();
-    const dateStr = now.toISOString().slice(0, 10);
-    const year    = now.getFullYear();
-    const month   = now.getMonth() + 1;
-    const weekNum = getISOWeekNumber(now);
+        // Cash payment: auto-generate CP- reference
+        if (paymethod === "Cash" || !refnum) {
+            refnum = generateCashRef();
+        }
 
-    // ── Build grouped fields for the single log row ────────────
-    // Format: "Product A (x2), Product B (x1)"
-    const productNames  = cart.map(i => `${i.product} (x${i.quantity})`).join(", ");
-    const totalQty      = cart.reduce((sum, i) => sum + i.quantity, 0);
-    const totalSubtotal = total;
-    // Average price per unit for reference
-    const avgPrice      = totalQty > 0 ? (totalSubtotal / totalQty).toFixed(2) : 0;
+        const change  = Number(amount) - total;
+        const now     = new Date();
+        const dateStr = now.toISOString().slice(0, 10);
+        const year    = now.getFullYear();
+        const month   = now.getMonth() + 1;
+        const weekNum = getISOWeekNumber(now);
 
-    // Snapshot of cart items for receipt (stored as JSON string in product_name
-    // is too lossy — we'll return it in the response instead)
-    const cartSnapshot = cart.map(i => ({
-        product:  i.product,
-        quantity: i.quantity,
-        price:    i.price,
-        subtotal: i.subtotal,
-    }));
+        const productNames = cart.map(i => `${i.product} (x${i.quantity})`).join(", ");
+        const totalQty     = cart.reduce((sum, i) => sum + i.quantity, 0);
+        const avgPrice     = totalQty > 0 ? (total / totalQty).toFixed(2) : 0;
 
-    db.beginTransaction(err => {
-        if (err) return res.json({ error: "Transaction error" });
+        const cartSnapshot = cart.map(i => ({
+            product:    i.product,
+            quantity:   i.quantity,
+            price:      i.price,
+            subtotal:   i.subtotal,
+            components: i.components,
+        }));
 
-        let inventoryUpdated = 0;
-        let failed           = false;
+        // Run all DB operations in a transaction
+        await new Promise((resolve, reject) => {
+            db.beginTransaction(async (err) => {
+                if (err) return reject(err);
 
-        // 1. Deduct stock for every cart item
-        cart.forEach(item => {
-            db.query(
-                "UPDATE inventory SET quantity = quantity - ? WHERE product_name = ?",
-                [item.quantity, item.product],
-                (err) => {
-                    if (err && !failed) {
-                        failed = true;
-                        return db.rollback(() => res.json({ error: "Inventory update failed" }));
-                    }
-
-                    inventoryUpdated++;
-
-                    // 2. Once all inventory updates are done, insert ONE log row
-                    if (inventoryUpdated === cart.length && !failed) {
-                        db.query(
-                            `INSERT INTO transaction_log
-                                (inventory_id, processed_by, service_id,
-                                 product_name, quantity, price,
-                                 payment_method, amount_paid, change_amount,
-                                 subtotal, reference_number, timestamp)
-                             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
-                            [
-                                null,           // group transaction — no single inventory_id
-                                processedBy,
-                                null,
-                                productNames,   // "Product A (x2), Product B (x1)"
-                                totalQty,       // total units sold
-                                avgPrice,       // average price per unit
-                                paymethod,
-                                Number(amount),
-                                change,
-                                totalSubtotal,
-                                refnum || null,
-                            ],
-                            async (err) => {
-                                if (err) {
-                                    return db.rollback(() => res.json({ error: "Log insert failed" }));
-                                }
-
-                                db.commit(async (err) => {
-                                    if (err) return res.json({ error: "Commit failed" });
-
-                                    const savedCart = [...cartSnapshot];
-                                    cart = [];
-
-                                    // Auto-update sales tables
-                                    try {
-                                        await updateSalesFromDB(dateStr, year, month, weekNum);
-                                    } catch (e) {
-                                        console.error("Sales auto-update error:", e.message);
-                                    }
-
-                                    res.json({
-                                        message:  "success",
-                                        change,
-                                        // Return cart snapshot so frontend can build receipt
-                                        items:    savedCart,
-                                        payment:  paymethod,
-                                        amount:   Number(amount),
-                                        total:    totalSubtotal,
-                                        refnum:   refnum || null,
-                                    });
-                                });
-                            }
+                try {
+                    // 1. Deduct product stock
+                    for (const item of cart) {
+                        await query(
+                            "UPDATE inventory SET quantity = quantity - ? WHERE product_name = ?",
+                            [item.quantity, item.product]
                         );
                     }
+
+                    // 2. Deduct component stock
+                    for (const item of cart) {
+                        for (const comp of (item.components || [])) {
+                            await query(
+                                "UPDATE components SET quantity = quantity - ? WHERE component_id = ?",
+                                [item.quantity, comp.component_id]
+                            );
+                        }
+                    }
+
+                    // 3. Insert ONE transaction log row with the formatted reference
+                    await query(
+                        `INSERT INTO transaction_log
+                            (inventory_id, processed_by, service_id,
+                             product_name, quantity, price,
+                             payment_method, amount_paid, change_amount,
+                             subtotal, reference_number, timestamp)
+                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                        [
+                            null,
+                            processedBy,
+                            null,
+                            productNames,
+                            totalQty,
+                            avgPrice,
+                            paymethod,
+                            Number(amount),
+                            change,
+                            total,
+                            refnum,     // CP-... or OP-...
+                        ]
+                    );
+
+                    db.commit((err) => {
+                        if (err) return reject(err);
+                        resolve();
+                    });
+
+                } catch (innerErr) {
+                    db.rollback(() => reject(innerErr));
                 }
-            );
+            });
         });
-    });
+
+        cart = [];
+
+        try {
+            await updateSalesFromDB(dateStr, year, month, weekNum);
+        } catch (e) {
+            console.error("Sales auto-update error:", e.message);
+        }
+
+        res.json({
+            message: "success",
+            change,
+            items:   cartSnapshot,
+            payment: paymethod,
+            amount:  Number(amount),
+            total,
+            refnum,     // send back the final reference (CP- or OP-) for the receipt
+        });
+
+    } catch (err) {
+        console.error("Checkout error:", err);
+        res.status(500).json({ error: err.message });
+    }
 });
 
 // ── GET /transactions/logs ─────────────────────────────────────

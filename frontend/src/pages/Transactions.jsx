@@ -12,6 +12,10 @@ import {
     getLogs,
 } from "../services/api";
 
+// ── Online payment methods that require a reference number ─────
+const ONLINE_METHODS = ["GCash", "Maya", "MariBank"];
+
+// ── Receipt shown right after checkout ────────────────────────
 function ReceiptModal({ receipt, onClose }) {
     if (!receipt) return null;
 
@@ -25,7 +29,6 @@ function ReceiptModal({ receipt, onClose }) {
             <div className="stock-modal-overlay" onClick={onClose} />
             <div className="receipt-box" onClick={e => e.stopPropagation()}>
                 <h3>Payment Receipt</h3>
-
                 <p style={{ textAlign: "center", fontSize: 12, color: "#64748b", marginBottom: 16 }}>
                     {today}
                 </p>
@@ -49,15 +52,11 @@ function ReceiptModal({ receipt, onClose }) {
                 <p>Method: {receipt.payment}</p>
                 <p>Amount Paid: ₱{parseFloat(receipt.amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
                 <p>Change: ₱{parseFloat(receipt.change).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
-                {receipt.refnum && <p>Reference #: {receipt.refnum}</p>}
+                {/* Always show reference — cash has auto-generated CP-, online has OP- */}
+                <p>Reference #: {receipt.refnum}</p>
 
                 <div style={{ borderTop: "2px dashed #000", margin: "16px 0" }} />
-
-                <button
-                    className="logout-btn"
-                    style={{ width: "100%", marginTop: 16 }}
-                    onClick={onClose}
-                >
+                <button className="logout-btn" style={{ width: "100%", marginTop: 16 }} onClick={onClose}>
                     Close
                 </button>
             </div>
@@ -65,6 +64,7 @@ function ReceiptModal({ receipt, onClose }) {
     );
 }
 
+// ── Receipt from logs table ────────────────────────────────────
 function LogReceiptModal({ log, onClose }) {
     if (!log) return null;
     return (
@@ -72,7 +72,6 @@ function LogReceiptModal({ log, onClose }) {
             <div className="stock-modal-overlay" onClick={onClose} />
             <div className="receipt-box" onClick={e => e.stopPropagation()}>
                 <h3>Payment Receipt</h3>
-
                 <h4>Transaction #{log.log_id}</h4>
                 <p style={{ fontSize: 13, marginBottom: 8 }}>{log.timestamp}</p>
 
@@ -90,10 +89,9 @@ function LogReceiptModal({ log, onClose }) {
                 <p>Method: {log.payment_method}</p>
                 <p>Amount Paid: ₱{parseFloat(log.amount_paid).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
                 <p>Change: ₱{parseFloat(log.change_amount).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</p>
-                {log.reference_number && <p>Reference #: {log.reference_number}</p>}
+                <p>Reference #: {log.reference_number || "—"}</p>
 
                 <div style={{ borderTop: "2px dashed #000", margin: "16px 0" }} />
-
                 <button className="logout-btn" style={{ width: "100%", marginTop: 16 }} onClick={onClose}>
                     Close
                 </button>
@@ -103,25 +101,24 @@ function LogReceiptModal({ log, onClose }) {
 }
 
 export default function Transactions() {
-    const [data, setData]           = useState(null);
-    const [products, setProducts]   = useState([]);
-    const [cart, setCart]           = useState([]);
-    const [logs, setLogs]           = useState([]);
+    const [data, setData]         = useState(null);
+    const [products, setProducts] = useState([]);
+    const [cart, setCart]         = useState([]);
+    const [logs, setLogs]         = useState([]);
 
-    // Receipt state — shown right after checkout
-    const [receipt, setReceipt]         = useState(null);
-    const [receiptOpen, setReceiptOpen] = useState(false);
-
-    // Log receipt — shown when clicking Receipt button in logs table
+    const [receipt, setReceipt]               = useState(null);
+    const [receiptOpen, setReceiptOpen]       = useState(false);
     const [logReceipt, setLogReceipt]         = useState(null);
     const [logReceiptOpen, setLogReceiptOpen] = useState(false);
 
-    const role    = localStorage.getItem("role");
-    const userID  = localStorage.getItem("user_id");
+    const role   = localStorage.getItem("role");
+    const userID = localStorage.getItem("user_id");
     const [profileOpen, setProfileOpen] = useState(false);
 
     const [form, setForm]       = useState({ product: "", quantity: "" });
     const [payment, setPayment] = useState({ paymethod: "", amount: "", refnum: "" });
+
+    const isOnline = ONLINE_METHODS.includes(payment.paymethod);
 
     const fetchAll = () => {
         getDashboard(userID).then(res => setData(res.data));
@@ -154,28 +151,47 @@ export default function Transactions() {
     };
 
     // ── Checkout ──────────────────────────────────────────────
+    // For online: prefix user-typed ref with "OP-"
+    // For cash:   send empty refnum — backend generates "CP-<id>"
     const handleCheckout = (e) => {
         e.preventDefault();
-        checkout(payment).then(res => {
+
+        // Validate online reference input
+        if (isOnline && !payment.refnum.trim()) {
+            alert("Please enter a reference number for online payment.");
+            return;
+        }
+
+        const payload = {
+            paymethod: payment.paymethod,
+            amount:    payment.amount,
+            // Online: prefix with OP-, Cash: send null so backend auto-generates
+            refnum: isOnline ? `OP-${payment.refnum.trim()}` : null,
+        };
+
+        checkout(payload).then(res => {
             if (res.data.error) {
                 alert(res.data.error);
             } else {
-                // Build receipt from response and show it
                 setReceipt({
                     items:   res.data.items,
                     total:   res.data.total,
                     payment: res.data.payment,
                     amount:  res.data.amount,
                     change:  res.data.change,
-                    refnum:  res.data.refnum,
+                    refnum:  res.data.refnum, // already formatted from backend
                 });
                 setReceiptOpen(true);
-
                 setCart([]);
                 setPayment({ paymethod: "", amount: "", refnum: "" });
                 getLogs().then(r => setLogs(r.data));
             }
         });
+    };
+
+    // When payment method changes, clear the refnum input
+    const handleMethodChange = (e) => {
+        setPayment({ ...payment, paymethod: e.target.value, refnum: "" });
     };
 
     const total = cart.reduce((sum, i) => sum + i.subtotal, 0);
@@ -186,18 +202,14 @@ export default function Transactions() {
             <Topbar toggleProfile={() => setProfileOpen(!profileOpen)} />
             <ProfileBox user={data.user} visible={profileOpen} />
 
-            {/* Receipt shown right after checkout */}
             {receiptOpen && (
                 <ReceiptModal receipt={receipt} onClose={() => { setReceiptOpen(false); setReceipt(null); }} />
             )}
-
-            {/* Receipt from logs table */}
             {logReceiptOpen && (
                 <LogReceiptModal log={logReceipt} onClose={() => { setLogReceiptOpen(false); setLogReceipt(null); }} />
             )}
 
             <div className="main">
-
                 <section className="main-section">
                     <h1>Product Payments</h1>
                 </section>
@@ -223,7 +235,7 @@ export default function Transactions() {
                                 <label>Quantity</label>
                                 <input
                                     type="number"
-                                    min={0}
+                                    min={1}
                                     required
                                     value={form.quantity}
                                     onChange={e => setForm({ ...form, quantity: e.target.value })}
@@ -239,14 +251,14 @@ export default function Transactions() {
                     <div className="section-box payment-box role-box">
                         <h2>Payment</h2>
                         <h4>Total: ₱{total.toLocaleString("en-PH", { minimumFractionDigits: 2 })}</h4>
+
                         <form onSubmit={handleCheckout}>
                             <div className="payment-row">
+
+                                {/* Payment Method */}
                                 <div className="payment-group">
                                     <label>Payment Method</label>
-                                    <select
-                                        value={payment.paymethod}
-                                        onChange={e => setPayment({ ...payment, paymethod: e.target.value })}
-                                    >
+                                    <select value={payment.paymethod} onChange={handleMethodChange}>
                                         <option value="">--Select--</option>
                                         <option value="GCash">GCash</option>
                                         <option value="Maya">Maya</option>
@@ -254,25 +266,46 @@ export default function Transactions() {
                                         <option value="Cash">Cash</option>
                                     </select>
                                 </div>
+
+                                {/* Amount */}
                                 <div className="payment-group">
                                     <label>Amount</label>
                                     <input
-                                        min={0}
                                         type="number"
+                                        min={0}
                                         required
                                         value={payment.amount}
                                         onChange={e => setPayment({ ...payment, amount: e.target.value })}
                                     />
                                 </div>
-                                <div className="payment-group">
-                                    <label>Reference</label>
-                                    <input
-                                        min={0}
-                                        type="number"
-                                        value={payment.refnum}
-                                        onChange={e => setPayment({ ...payment, refnum: e.target.value })}
-                                    />
-                                </div>
+
+                                {/* Reference — only shown for online payments */}
+                                {isOnline && (
+                                    <div className="payment-group">
+                                        <label>
+                                            Reference No.
+                                        </label>
+                                        <input
+                                            type="text"
+                                            value={payment.refnum}
+                                            onChange={e => setPayment({ ...payment, refnum: e.target.value })}
+                                        />
+                                    </div>
+                                )}
+
+                                {/* Cash note */}
+                                {payment.paymethod === "Cash" && (
+                                    <div className="payment-group">
+                                        <label>Reference No.</label>
+                                        <input
+                                            type="text"
+                                            value="Auto-generated"
+                                            disabled
+                                            style={{ background: "#f1f5f9", color: "#94a3b8", cursor: "not-allowed" }}
+                                        />
+                                    </div>
+                                )}
+
                                 <button type="submit">Checkout</button>
                             </div>
                         </form>
@@ -325,7 +358,7 @@ export default function Transactions() {
                                     <th>Amount Paid</th>
                                     <th>Change</th>
                                     <th>Subtotal</th>
-                                    <th>Ref</th>
+                                    <th>Reference</th>
                                     <th>Time</th>
                                 </tr>
                             </thead>
@@ -335,10 +368,7 @@ export default function Transactions() {
                                         <td>
                                             <button
                                                 className="empDelButton"
-                                                onClick={() => {
-                                                    setLogReceipt(l);
-                                                    setLogReceiptOpen(true);
-                                                }}
+                                                onClick={() => { setLogReceipt(l); setLogReceiptOpen(true); }}
                                             >
                                                 Receipt
                                             </button>

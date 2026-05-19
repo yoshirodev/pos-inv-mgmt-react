@@ -1,6 +1,9 @@
 #TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
     cash payments should have their own reference id generated internaly
+        Product payment done
+        Service payment pending
     components of a product should automatically deduct its stock when a product is sold
 
 #BUG
     find a way to fix the Inventory can input negative number on stock and cost and selling price
+    when hovering the profile button cursor becomes text edit

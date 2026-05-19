@@ -680,6 +680,7 @@ button:active {
 
 .profile-btn:hover {
   background: #eef2f7;
+  cursor:pointer
 }
 
 .profile-box {
