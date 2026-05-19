@@ -116,13 +116,19 @@ router.post("/service-done", (req, res) => {
     const { service_id } = req.body;
 
     db.query(
-        "SELECT service_ordered, price FROM service_requests WHERE service_id = ?",
+        "SELECT service_ordered, price, perso_id FROM service_requests WHERE service_id = ?",
         [service_id],
         (err, result) => {
             if (err)            return res.status(500).json({ error: err.message });
             if (!result.length) return res.status(404).json({ error: "Service not found" });
 
             const service = result[0];
+
+            if (!service.perso_id) {
+                return res.status(400).json({
+                    error: "Assign a service personnel first."
+                });
+            }
 
             serviceCart.push({
                 product:      service.service_ordered,

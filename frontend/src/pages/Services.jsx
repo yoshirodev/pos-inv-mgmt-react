@@ -53,7 +53,24 @@ export default function Services() {
 
     // ── Mark service as done → moves to service cart ──────────
     const handleServiceDone = (service_id) => {
+
+        // Find the selected service
+        const selectedService = services.find(
+            s => s.service_id === service_id
+        );
+
+        // Reject if no personnel assigned
+        if (!selectedService?.perso_id) {
+            alert("Please assign a service personnel first.");
+            return;
+        }
+
         doneService(service_id).then(res => {
+            if (res.data.error) {
+                alert(res.data.error);
+                return;
+            }
+
             setServiceCart(res.data);
             getServices().then(r => setServices(r.data));
         });

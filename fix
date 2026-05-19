@@ -1,9 +1,8 @@
 #TRANSACTIONS BOTH PRODUCT AND SERVICE PAYMENT
-    cash payments should have their own reference id generated internaly
-        Product payment done
-        Service payment pending
     components of a product should automatically deduct its stock when a product is sold
+    activity log
 
 #BUG
     find a way to fix the Inventory can input negative number on stock and cost and selling price
-    when hovering the profile button cursor becomes text edit
+    database added_by FK in inventory doesnt work
+    database inventory_id FK in transaction log doesnt work
