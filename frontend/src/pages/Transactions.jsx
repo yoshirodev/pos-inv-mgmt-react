@@ -34,12 +34,30 @@ function ReceiptModal({ receipt, onClose }) {
                 </p>
 
                 <h4>Items Purchased</h4>
-                {receipt.items.map((item, i) => (
-                    <div key={i} style={{ display: "flex", justifyContent: "space-between", margin: "6px 0", fontSize: 13 }}>
-                        <span>{item.product} × {item.quantity}</span>
-                        <span>₱{parseFloat(item.subtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</span>
-                    </div>
-                ))}
+                {/* Group by parent in receipt */}
+                {(() => {
+                    const parents = receipt.items.filter(i => !i.isComponent);
+                    return parents.map((parent, pi) => {
+                        const parentIdx = receipt.items.indexOf(parent);
+                        const children  = receipt.items.filter(
+                            c => c.isComponent && c.parentIndex === parentIdx
+                        );
+                        return (
+                            <div key={pi}>
+                                <div style={{ display:"flex", justifyContent:"space-between", margin:"6px 0", fontSize:13, fontWeight:600 }}>
+                                    <span>{parent.product} × {parent.quantity}</span>
+                                    <span>₱{parseFloat(parent.subtotal).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
+                                </div>
+                                {children.map((comp, ci) => (
+                                    <div key={ci} style={{ display:"flex", justifyContent:"space-between", margin:"3px 0 3px 20px", fontSize:12, color:"#64748b" }}>
+                                        <span>↳ {comp.product} × {comp.quantity}</span>
+                                        <span>₱{parseFloat(comp.subtotal).toLocaleString("en-PH",{minimumFractionDigits:2})}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        );
+                    });
+                })()}
 
                 <div style={{ borderTop: "1px dashed #000", margin: "14px 0" }} />
 
@@ -328,9 +346,18 @@ export default function Transactions() {
                         </thead>
                         <tbody>
                             {cart.map((item, index) => (
-                                <tr key={index}>
-                                    <td>{index + 1}</td>
-                                    <td>{item.product}</td>
+                                <tr
+                                    key={index}
+                                    style={item.isComponent ? {
+                                        background: "#f8fafc",
+                                        color: "#64748b",
+                                        fontSize: 12,
+                                    } : {}}
+                                >
+                                    <td>{item.isComponent ? "" : index + 1}</td>
+                                    <td style={item.isComponent ? { paddingLeft: 28 } : {}}>
+                                        {item.isComponent ? `↳ ${item.product}` : item.product}
+                                    </td>
                                     <td>{item.quantity}</td>
                                     <td>₱{parseFloat(item.price).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>
                                     <td>₱{parseFloat(item.subtotal).toLocaleString("en-PH", { minimumFractionDigits: 2 })}</td>

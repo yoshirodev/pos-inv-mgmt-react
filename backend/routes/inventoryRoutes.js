@@ -29,7 +29,8 @@ router.get("/", (req, res) => {
 router.post("/create", upload.single("image"), (req, res) => {
     const {
         product_name, type, category, brand, serial_number,
-        cost, selling_price, quantity, length, width, height, description
+        cost, selling_price, quantity, length, width, height,
+        description, added_by   // ← add this
     } = req.body;
 
     const image_path = req.file ? req.file.filename : null;
@@ -37,13 +38,16 @@ router.post("/create", upload.single("image"), (req, res) => {
     const sql = `
         INSERT INTO inventory (
             product_name, type, category, brand, serial_number,
-            cost, selling_price, quantity, length, width, height, image_path, description
-        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            cost, selling_price, quantity, length, width, height,
+            image_path, description, added_by
+        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `;
 
     db.query(sql, [
         product_name, type, category, brand, serial_number,
-        cost, selling_price, quantity, length, width, height, image_path, description
+        cost, selling_price, quantity, length, width, height,
+        image_path, description,
+        added_by || null   // ← add this
     ], (err) => {
         if (err) {
             console.error(err);
