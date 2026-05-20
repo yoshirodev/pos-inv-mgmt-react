@@ -14,13 +14,6 @@ function query(sql, params = []) {
     });
 }
 
-// ── Helper: ISO week number ────────────────────────────────────
-function getISOWeekNumber(date) {
-    const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
-    d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-    const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-    return Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
-}
 
 // ── Helper: generate CP- reference for cash payments ──────────
 // Format: CP-<timestamp><4-digit random>
@@ -32,60 +25,7 @@ function generateCashRef() {
 }
 
 // ── Helper: auto-update sales tables after checkout ────────────
-async function updateSalesFromDB(dateStr, year, month, weekNum) {
-    const [day] = await query(
-        `SELECT COUNT(*) AS total_transactions,
-                COALESCE(SUM(quantity), 0) AS total_items_sold,
-                COALESCE(SUM(subtotal),  0) AS total_revenue
-         FROM transaction_log WHERE DATE(timestamp) = ?`,
-        [dateStr]
-    );
-    await query(
-        `INSERT INTO daily_sales (sales_date, total_transactions, total_items_sold, total_revenue)
-         VALUES (?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-             total_transactions = VALUES(total_transactions),
-             total_items_sold   = VALUES(total_items_sold),
-             total_revenue      = VALUES(total_revenue)`,
-        [dateStr, day.total_transactions, day.total_items_sold, parseFloat(day.total_revenue).toFixed(2)]
-    );
 
-    const [week] = await query(
-        `SELECT COUNT(*) AS total_transactions,
-                COALESCE(SUM(quantity), 0) AS total_items_sold,
-                COALESCE(SUM(subtotal),  0) AS total_revenue
-         FROM transaction_log
-         WHERE YEAR(timestamp) = ? AND WEEK(timestamp, 1) = ?`,
-        [year, weekNum]
-    );
-    await query(
-        `INSERT INTO weekly_sales (year, week_number, total_transactions, total_items_sold, total_revenue)
-         VALUES (?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-             total_transactions = VALUES(total_transactions),
-             total_items_sold   = VALUES(total_items_sold),
-             total_revenue      = VALUES(total_revenue)`,
-        [year, weekNum, week.total_transactions, week.total_items_sold, parseFloat(week.total_revenue).toFixed(2)]
-    );
-
-    const [mon] = await query(
-        `SELECT COUNT(*) AS total_transactions,
-                COALESCE(SUM(quantity), 0) AS total_items_sold,
-                COALESCE(SUM(subtotal),  0) AS total_revenue
-         FROM transaction_log
-         WHERE YEAR(timestamp) = ? AND MONTH(timestamp) = ?`,
-        [year, month]
-    );
-    await query(
-        `INSERT INTO monthly_sales (year, month, total_transactions, total_items_sold, total_revenue)
-         VALUES (?, ?, ?, ?, ?)
-         ON DUPLICATE KEY UPDATE
-             total_transactions = VALUES(total_transactions),
-             total_items_sold   = VALUES(total_items_sold),
-             total_revenue      = VALUES(total_revenue)`,
-        [year, month, mon.total_transactions, mon.total_items_sold, parseFloat(mon.total_revenue).toFixed(2)]
-    );
-}
 
 // ── GET /transactions/products ─────────────────────────────────
 router.get("/products", (req, res) => {
@@ -239,10 +179,6 @@ router.post("/checkout", async (req, res) => {
 
         const change  = Number(amount) - total;
         const now     = new Date();
-        const dateStr = now.toISOString().slice(0, 10);
-        const year    = now.getFullYear();
-        const month   = now.getMonth() + 1;
-        const weekNum = getISOWeekNumber(now);
 
         // Build product name string: "ProductA (x2) [CompA, CompB], ProductB (x1)"
         const parents = cart.filter(i => !i.isComponent);
@@ -300,8 +236,7 @@ router.post("/checkout", async (req, res) => {
 
         cart = [];
 
-        try { await updateSalesFromDB(dateStr, year, month, weekNum); }
-        catch (e) { console.error("Sales auto-update error:", e.message); }
+        
 
         res.json({
             message: "success", change,

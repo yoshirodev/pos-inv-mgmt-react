@@ -9,29 +9,26 @@ import {
     getMonthlySales,
 } from "../services/api";
 
-async function syncSalesFromLogs() {
-    const res = await fetch("/api/sales/sync", { method: "POST" });
-    if (!res.ok) throw new Error("Sync failed");
-    return res.json();
-}
-
 export default function Sales() {
-    const [data, setData]         = useState(null);
-    const [daily, setDaily]       = useState([]);
-    const [weekly, setWeekly]     = useState([]);
-    const [monthly, setMonthly]   = useState([]);
+    const [data, setData]       = useState(null);
+    const [daily, setDaily]     = useState([]);
+    const [weekly, setWeekly]   = useState([]);
+    const [monthly, setMonthly] = useState([]);
     const [profileOpen, setProfileOpen] = useState(false);
-    const [syncing, setSyncing]   = useState(false);
-    const [syncMsg, setSyncMsg]   = useState("");
+    const [refreshing, setRefreshing]   = useState(false);
 
     const role   = localStorage.getItem("role");
     const userID = localStorage.getItem("user_id");
 
-    // Fetch all sales data from the backend
-    const fetchSales = () => {
-        getDailySales().then(res => setDaily(res.data));
-        getWeeklySales().then(res => setWeekly(res.data));
-        getMonthlySales().then(res => setMonthly(res.data));
+    const fetchSales = async () => {
+        const [d, w, m] = await Promise.all([
+            getDailySales(),
+            getWeeklySales(),
+            getMonthlySales(),
+        ]);
+        setDaily(d.data);
+        setWeekly(w.data);
+        setMonthly(m.data);
     };
 
     useEffect(() => {
@@ -45,23 +42,12 @@ export default function Sales() {
         year: "numeric", month: "long", day: "numeric",
     });
 
-    const handleSync = async () => {
-        setSyncing(true);
-        setSyncMsg("");
+    const handleRefresh = async () => {
+        setRefreshing(true);
         try {
-            const result = await syncSalesFromLogs();
-            setSyncMsg(
-                `Sync complete — ${result.synced.days} day(s), ` +
-                `${result.synced.weeks} week(s), ` +
-                `${result.synced.months} month(s) updated.`
-            );
-            // Re-fetch all three tables so the UI reflects the DB
-            fetchSales();
-        } catch (err) {
-            setSyncMsg("Sync failed. Check the console.");
-            console.error(err);
+            await fetchSales();
         } finally {
-            setSyncing(false);
+            setRefreshing(false);
         }
     };
 
@@ -82,33 +68,28 @@ export default function Sales() {
                 {role === "Manager" ? (
                     <section className="role-section">
 
-                        {/* ── Sync button ──────────────────────────────── */}
-                        <div className="role-box" style={{ display: "flex", alignItems: "center", gap: "16px", flexWrap: "wrap" }}>
+                        {/* ── Refresh button ── */}
+                        <div className="role-box">
                             <button
-                                onClick={handleSync}
-                                disabled={syncing}
+                                onClick={handleRefresh}
+                                disabled={refreshing}
                                 style={{
-                                    background: syncing ? "#94a3b8" : "#2563eb",
+                                    background: refreshing ? "#94a3b8" : "#2563eb",
                                     color: "white",
                                     border: "none",
                                     borderRadius: "6px",
                                     padding: "9px 20px",
                                     fontWeight: 600,
                                     fontSize: "14px",
-                                    cursor: syncing ? "not-allowed" : "pointer",
+                                    cursor: refreshing ? "not-allowed" : "pointer",
                                     transition: "background 0.2s",
                                 }}
                             >
-                                {syncing ? "Syncing…" : "Update Tables"}
+                                {refreshing ? "Refreshing…" : "Refresh"}
                             </button>
-                            {syncMsg && (
-                                <span style={{ fontSize: "13px", color: "#10b981", fontWeight: 500 }}>
-                                    
-                                </span>
-                            )}
                         </div>
 
-                        {/* ── Daily Sales ──────────────────────────────── */}
+                        {/* ── Daily Sales ── */}
                         <div className="role-box">
                             <h2>Daily Sales</h2>
                             <table>
@@ -125,7 +106,7 @@ export default function Sales() {
                                     {daily.length === 0 ? (
                                         <tr>
                                             <td colSpan={5} style={{ textAlign: "center", color: "#94a3b8" }}>
-                                                No data — click Sync to populate.
+                                                No transactions found.
                                             </td>
                                         </tr>
                                     ) : (
@@ -143,7 +124,7 @@ export default function Sales() {
                             </table>
                         </div>
 
-                        {/* ── Weekly Sales ─────────────────────────────── */}
+                        {/* ── Weekly Sales ── */}
                         <div className="role-box">
                             <h2>Weekly Sales</h2>
                             <table>
@@ -161,7 +142,7 @@ export default function Sales() {
                                     {weekly.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} style={{ textAlign: "center", color: "#94a3b8" }}>
-                                                No data — click Sync to populate.
+                                                No transactions found.
                                             </td>
                                         </tr>
                                     ) : (
@@ -180,7 +161,7 @@ export default function Sales() {
                             </table>
                         </div>
 
-                        {/* ── Monthly Sales ────────────────────────────── */}
+                        {/* ── Monthly Sales ── */}
                         <div className="role-box">
                             <h2>Monthly Sales</h2>
                             <table>
@@ -198,7 +179,7 @@ export default function Sales() {
                                     {monthly.length === 0 ? (
                                         <tr>
                                             <td colSpan={6} style={{ textAlign: "center", color: "#94a3b8" }}>
-                                                No data — click Sync to populate.
+                                                No transactions found.
                                             </td>
                                         </tr>
                                     ) : (
