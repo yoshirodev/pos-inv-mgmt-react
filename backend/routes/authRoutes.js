@@ -6,6 +6,8 @@ const jwt = require("jsonwebtoken");
 
 const SECRET = "secretkey";
 
+const logActivity = require("../utils/logActivity");
+
 // ── POST /api/auth/login 
 router.post("/login", (req, res) => {
     const { username, password } = req.body;
@@ -36,6 +38,8 @@ router.post("/register", async (req, res) => {
         email, username, userpassword, accountType
     } = req.body;
 
+    const createdBy = req.headers["x-user-id"] || null;
+
     // Basic validation
     if (!lastname || !firstname || !email || !username || !userpassword || !accountType) {
         return res.status(400).json({ error: "Please fill in all required fields." });
@@ -64,9 +68,16 @@ router.post("/register", async (req, res) => {
                 lastname, firstname, middlename || "",
                 birthdate, gender, phonenumber,
                 email, username, hashed, accountType
-            ], (err, result) => {
+            ], (err, insertResult) => {
                 if (err) return res.status(500).json({ error: "Failed to create account." });
-                res.json({ message: "Account created successfully.", accID: result.insertId });
+
+                // ── Activity log ──────────────────────────────
+                logActivity({
+                    description: `Created new ${accountType} account: "${firstname} ${lastname}" (@${username})`,
+                    user_id: createdBy ? parseInt(createdBy) : null  // ← was createdById, now createdBy
+                });
+
+                res.json({ message: "Account created successfully.", accID: insertResult.insertId });
             });
         });
 

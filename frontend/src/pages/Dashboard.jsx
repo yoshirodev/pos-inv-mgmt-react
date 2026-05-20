@@ -458,7 +458,39 @@ export default function Dashboard() {
                         </>
                     )}
                 </section>
-
+                {/* ════════════════════════════════════════════
+                    MANAGER — Activity Log Table
+                ════════════════════════════════════════════ */}
+                {role === "Manager" && (
+                    <section className="role-section">
+                        <div className="role-box">
+                            <h2>Activity Log <i className="fa-solid fa-clock-rotate-left"></i></h2>
+                            <table>
+                                <thead>
+                                    <tr>
+                                        <th>Activity Id</th>
+                                        <th>Description</th>
+                                        <th>Performed By</th>
+                                        <th>Date & Time</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {data.activity_logs.map(log => (
+                                        <tr key={log.activity_id}>
+                                            <td>{log.activity_id}</td>
+                                            <td>{log.description}</td>
+                                            <td>{log.performed_by || "—"}</td>
+                                            <td>{new Date(log.created_at).toLocaleString("en-PH", {
+                                                year: "numeric", month: "short", day: "numeric",
+                                                hour: "2-digit", minute: "2-digit"
+                                            })}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        </div>
+                    </section>
+                )}
             </div>
         </div>
     );
