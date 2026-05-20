@@ -2,6 +2,8 @@ const express = require("express");
 const router  = express.Router();
 const db      = require("../config/db");
 
+const logActivity = require("../utils/logActivity");
+
 let cart = [];
 
 // ── Helper: promisify db.query ─────────────────────────────────
@@ -216,16 +218,16 @@ router.post("/checkout", async (req, res) => {
                         );
                     }
                     // Single log row
-                    await query(
+                    const txResult = await query(
                         `INSERT INTO transaction_log
                             (inventory_id, processed_by, service_id,
-                             product_name, quantity, price,
-                             payment_method, amount_paid, change_amount,
-                             subtotal, reference_number, timestamp)
-                         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
+                            product_name, quantity, price,
+                            payment_method, amount_paid, change_amount,
+                            subtotal, reference_number, timestamp)
+                        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())`,
                         [null, processedBy, null,
-                         productNameStr, totalQty, avgPrice,
-                         paymethod, Number(amount), change, total, refnum]
+                        productNameStr, totalQty, avgPrice,
+                        paymethod, Number(amount), change, total, refnum]
                     );
                     db.commit(err => { if (err) return reject(err); resolve(); });
                 } catch (innerErr) {
@@ -236,7 +238,11 @@ router.post("/checkout", async (req, res) => {
 
         cart = [];
 
-        
+        logActivity({
+            description: `Transaction: ${productNameStr} — Total ₱${total.toFixed(2)} via ${paymethod} (Ref: ${refnum})`,
+            transaction_id: null, // we don't get insertId from the log insert easily; optional enhancement
+            user_id: processedBy ? parseInt(processedBy) : null
+        });
 
         res.json({
             message: "success", change,

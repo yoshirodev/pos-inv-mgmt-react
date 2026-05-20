@@ -1,15 +1,14 @@
 const express = require("express");
 const router  = express.Router();
 const db      = require("../config/db");
+const logActivity = require("../utils/logActivity");
 
-// ── GET /components/all  ──────────────────────────────────────
-// Returns every component joined with its product name (for the "Show All" modal)
+// ── GET /components/all ───────────────────────────────────────
 router.get("/all", (req, res) => {
     const sql = `
-        SELECT  c.*,
-                i.product_name
-        FROM    components c
-        JOIN    inventory  i ON i.id = c.product_id
+        SELECT c.*, i.product_name
+        FROM   components c
+        JOIN   inventory  i ON i.id = c.product_id
         ORDER BY c.component_id DESC
     `;
     db.query(sql, (err, result) => {
@@ -18,8 +17,7 @@ router.get("/all", (req, res) => {
     });
 });
 
-// ── GET /components/:productId  ───────────────────────────────
-// Returns all components that belong to a specific product
+// ── GET /components/:productId ────────────────────────────────
 router.get("/:productId", (req, res) => {
     db.query(
         "SELECT * FROM components WHERE product_id = ? ORDER BY component_id DESC",
@@ -31,12 +29,9 @@ router.get("/:productId", (req, res) => {
     );
 });
 
-// ── POST /components/create  ──────────────────────────────────
-// Creates a new component; added_by comes from the x-user-id header set by the axios interceptor
+// ── POST /components/create ───────────────────────────────────
 router.post("/create", (req, res) => {
     const { product_id, component_name, description, quantity, cost, selling_price } = req.body;
-
-    // Pull the user id the axios interceptor attaches on every request
     const added_by = req.headers["x-user-id"] || null;
 
     const sql = `
@@ -45,19 +40,32 @@ router.post("/create", (req, res) => {
         VALUES (?, ?, ?, ?, ?, ?, ?)
     `;
 
-    db.query(sql, [product_id, component_name, description, quantity, cost, selling_price, added_by], (err) => {
+    db.query(sql, [product_id, component_name, description, quantity, cost, selling_price, added_by], (err, result) => {
         if (err) {
             console.error(err);
             return res.status(500).json({ message: "Failed to create component" });
         }
+
+        // ── Activity log ──────────────────────────────────────
+        // Fetch product name for a readable description
+        db.query("SELECT product_name FROM inventory WHERE id = ?", [product_id], (e, rows) => {
+            const pName = rows?.[0]?.product_name || `Product ID ${product_id}`;
+            logActivity({
+                description: `Added component "${component_name}" to "${pName}" (Qty: ${quantity})`,
+                inventory_id: parseInt(product_id),
+                components_id: result.insertId,
+                user_id: added_by
+            });
+        });
+
         res.json({ message: "Component created successfully" });
     });
 });
 
-// ── PUT /components/:id  ──────────────────────────────────────
-// Updates a component; keeps the existing value when a field is left blank
+// ── PUT /components/:id ───────────────────────────────────────
 router.put("/:id", (req, res) => {
     const { component_name, description, quantity, cost, selling_price } = req.body;
+    const userId = req.headers["x-user-id"] || null;
 
     db.query(
         "SELECT * FROM components WHERE component_id = ?",
@@ -69,16 +77,12 @@ router.put("/:id", (req, res) => {
             const c   = result[0];
             const val = (newVal, current) =>
                 newVal !== undefined && newVal !== null && String(newVal).trim() !== ""
-                    ? newVal
-                    : current;
+                    ? newVal : current;
 
             const sql = `
                 UPDATE components
-                SET component_name = ?,
-                    description    = ?,
-                    quantity       = ?,
-                    cost           = ?,
-                    selling_price  = ?
+                SET component_name = ?, description = ?, quantity = ?,
+                    cost = ?, selling_price = ?
                 WHERE component_id = ?
             `;
 
@@ -91,17 +95,42 @@ router.put("/:id", (req, res) => {
                 req.params.id
             ], (err) => {
                 if (err) return res.status(500).json({ message: "Update failed" });
+
+                // ── Activity log ──────────────────────────────
+                logActivity({
+                    description: `Updated component "${val(component_name, c.component_name)}"`,
+                    components_id: parseInt(req.params.id),
+                    inventory_id: c.product_id,
+                    user_id: userId
+                });
+
                 res.json({ message: "Component updated" });
             });
         }
     );
 });
 
-// ── DELETE /components/:id  ───────────────────────────────────
+// ── DELETE /components/:id ────────────────────────────────────
 router.delete("/:id", (req, res) => {
-    db.query("DELETE FROM components WHERE component_id = ?", [req.params.id], (err) => {
-        if (err) return res.status(500).json({ message: "Delete failed" });
-        res.json({ message: "Component deleted" });
+    const userId = req.headers["x-user-id"] || null;
+
+    db.query("SELECT * FROM components WHERE component_id = ?", [req.params.id], (err, result) => {
+        const comp = result?.[0];
+        const compName = comp?.component_name || `ID ${req.params.id}`;
+
+        db.query("DELETE FROM components WHERE component_id = ?", [req.params.id], (err) => {
+            if (err) return res.status(500).json({ message: "Delete failed" });
+
+            // ── Activity log ──────────────────────────────────
+            logActivity({
+                description: `Deleted component "${compName}"`,
+                inventory_id: comp?.product_id || null,
+                user_id: userId
+                // components_id null — row is gone
+            });
+
+            res.json({ message: "Component deleted" });
+        });
     });
 });
 

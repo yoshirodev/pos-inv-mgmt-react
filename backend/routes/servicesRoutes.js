@@ -2,6 +2,8 @@ const express = require("express");
 const router = express.Router();
 const db = require("../config/db");
 
+const logActivity = require("../utils/logActivity");
+
 let serviceCart = [];
 
 // ── Helper: promisify db.query ─────────────────────────────────
@@ -200,6 +202,10 @@ router.post("/checkout", async (req, res) => {
         // Clear cart
         serviceCart = [];
 
+        logActivity({
+            description: `Service transaction: ${cartSnapshot.map(i => i.product).join(", ")} — Total ₱${total.toFixed(2)} via ${paymethod} (Ref: ${refnum})`,
+            user_id: processedBy ? parseInt(processedBy) : null
+        });
 
         res.json({
             message: "success",
@@ -244,9 +250,17 @@ router.post("/personel", (req, res) => {
         [first_name, last_name, email || null, phone_no || null],
         (err, result) => {
             if (err) return res.status(500).json({ error: err.message });
+
+            logActivity({
+                description: `Added service personnel: "${first_name} ${last_name}"`,
+                user_id: req.headers["x-user-id"] ? parseInt(req.headers["x-user-id"]) : null
+            });
+
             res.json({ message: "Personnel created", perso_id: result.insertId });
         }
     );
+
+
 });
 
 // ── DELETE /services/personel/:id ─────────────────────────────
